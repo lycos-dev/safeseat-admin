@@ -49,9 +49,6 @@ export interface Vehicle {
   hubId: string;
   connection: ConnectionStatus;
   state: MonitoringState;
-  heartRate: number | null;
-  respirationRate: number | null;
-  objectTemperature: number | null;
   camera: 'Standby' | 'Verifying' | 'Unavailable';
   lastUpdate: string;
   modules: SensorModule[];
@@ -84,7 +81,6 @@ export interface AdminSettings {
   resolvedNotifications: boolean;
   healthWarnings: boolean;
   compactDensity: boolean;
-  showVitalsInTables: boolean;
 }
 
 export interface SafeSeatState {

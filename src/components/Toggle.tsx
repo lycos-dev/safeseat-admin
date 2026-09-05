@@ -8,7 +8,9 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
       aria-label={label}
       onClick={() => onChange(!checked)}
     >
-      <span className="toggle__knob" aria-hidden="true" />
+      <span className="toggle__track" aria-hidden="true">
+        <span className="toggle__knob" />
+      </span>
     </button>
   );
 }

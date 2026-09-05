@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, ArrowRight, Camera, CarFront, HeartPulse, Radio, ShieldCheck, Users } from 'lucide-react';
+import { Activity, AlertTriangle, ArrowRight, Camera, CarFront, Radio, ShieldCheck, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DonutChart } from '../components/DonutChart';
@@ -58,10 +58,10 @@ export function Dashboard() {
 
       <div className="dashboard-grid dashboard-grid--wide">
         <section className="panel panel--span-2">
-          <SectionHeading eyebrow="LIVE MONITOR" title="Active SafeSeat sessions" description="Current vehicle → Main Hub → monitored seat → occupant relationship. Occupants may be registered users or session-only guests." action={<button className="text-button" onClick={() => navigate('/fleet')}>Manage fleet <ArrowRight size={16} /></button>} />
+          <SectionHeading eyebrow="LIVE MONITOR" title="Active SafeSeat sessions" description="Administrative status only: vehicle, monitored seat, occupant session, fusion state, and event-based camera state. Exact physiological readings are intentionally excluded." action={<button className="text-button" onClick={() => navigate('/fleet')}>Manage fleet <ArrowRight size={16} /></button>} />
           <div className="table-wrap">
             <table className="data-table data-table--sessions">
-              <thead><tr><th>Vehicle</th><th>Monitored seat</th><th>Occupant</th><th>State</th>{state.settings.showVitalsInTables && <><th>HR / RR</th><th>Temp</th></>}<th>Camera</th><th>Updated</th></tr></thead>
+              <thead><tr><th>Vehicle</th><th>Monitored seat</th><th>Occupant</th><th>Fusion state</th><th>Camera</th><th>Updated</th></tr></thead>
               <tbody>
                 {state.vehicles.map(vehicle => (
                   <tr key={vehicle.id} className="clickable-row" onClick={() => setSelected(vehicle)}>
@@ -69,7 +69,6 @@ export function Dashboard() {
                     <td>{vehicle.monitoredSeat}</td>
                     <td><OccupantLabel occupant={vehicle.occupant} /></td>
                     <td><StatusBadge status={vehicle.state} /></td>
-                    {state.settings.showVitalsInTables && <><td><span className="vital-inline"><HeartPulse size={14} />{vehicle.heartRate ?? '—'} / {vehicle.respirationRate ?? '—'}</span></td><td>{vehicle.objectTemperature !== null ? `${vehicle.objectTemperature.toFixed(1)}°C` : '—'}</td></>}
                     <td><span className={`camera-state camera-state--${vehicle.camera.toLowerCase()}`}><Camera size={14} />{vehicle.camera}</span></td>
                     <td className="muted">{fmtTime(vehicle.lastUpdate)}</td>
                   </tr>
@@ -77,6 +76,7 @@ export function Dashboard() {
               </tbody>
             </table>
           </div>
+          <div className="privacy-inline"><ShieldCheck size={15} /><span>Admin telemetry contract: derived system states only. Raw HR, RR, temperature, pressure values, and camera frames are not displayed or persisted in this dashboard.</span></div>
         </section>
 
         <section className="panel">
@@ -89,7 +89,7 @@ export function Dashboard() {
         <section className="panel">
           <SectionHeading eyebrow="SYSTEM DESIGN" title="Verification is event-based" description="The camera participates only when the sensor-fusion flow requests posture context." />
           <div className="flow-strip">
-            <div className="flow-node flow-node--active"><Radio /><strong>Primary sensors</strong><span>Continuous monitoring</span></div>
+            <div className="flow-node flow-node--active"><Radio /><strong>Primary sensors</strong><span>Continuous local monitoring</span></div>
             <ArrowRight className="flow-arrow" />
             <div className="flow-node"><AlertTriangle /><strong>Suspected</strong><span>Fusion requests context</span></div>
             <ArrowRight className="flow-arrow" />
@@ -97,7 +97,7 @@ export function Dashboard() {
             <ArrowRight className="flow-arrow" />
             <div className="flow-node"><ShieldCheck /><strong>Fusion decision</strong><span>Clear or escalate</span></div>
           </div>
-          <div className="notice notice--green"><ShieldCheck size={18} /><div><strong>Non-diagnostic interpretation</strong><p>The dashboard reports SafeSeat system states and supporting evidence. It does not label medical conditions, and camera posture never independently determines an emergency.</p></div></div>
+          <div className="notice notice--green"><ShieldCheck size={18} /><div><strong>Privacy-preserving admin view</strong><p>The dashboard receives operational states and incident outcomes, not exact physiological readings. Camera posture remains supporting evidence and does not independently determine an emergency.</p></div></div>
         </section>
 
         <section className="panel">

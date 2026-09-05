@@ -7,8 +7,8 @@ const modulesFor = (vehicleId: string, degraded = false, offline = false): Senso
   if (offline) {
     return [
       { id: `${vehicleId}-hub`, name: 'SafeSeat Main Hub', shortName: 'Main Hub', placement: 'Central controller', purpose: 'Sensor fusion, state management, and system coordination.', status: 'offline', lastChecked: baseTime, detail: 'No heartbeat from Main Hub.' },
-      { id: `${vehicleId}-c1001`, name: 'C1001 mmWave Radar', shortName: 'C1001', placement: 'Front-facing, approximately 0.8–1.0 m from occupant', purpose: 'Presence, respiration rate, heart rate, and motion-related radar context.', status: 'offline', lastChecked: baseTime, detail: 'Unavailable while Main Hub is offline.' },
-      { id: `${vehicleId}-mlx`, name: 'MLX90614 IR Temperature', shortName: 'MLX90614', placement: 'Headrest', purpose: 'Non-contact surface temperature input with ambient/delta runtime context.', status: 'offline', lastChecked: baseTime, detail: 'Unavailable while Main Hub is offline.' },
+      { id: `${vehicleId}-c1001`, name: 'C1001 mmWave Radar', shortName: 'C1001', placement: 'Front-facing, approximately 0.8–1.0 m from occupant', purpose: 'Local presence and physiological-signal context for SafeSeat fusion; exact readings are not exposed to administrators.', status: 'offline', lastChecked: baseTime, detail: 'Unavailable while Main Hub is offline.' },
+      { id: `${vehicleId}-mlx`, name: 'MLX90614 IR Temperature', shortName: 'MLX90614', placement: 'Headrest', purpose: 'Local thermal context for SafeSeat fusion; exact temperature values are not exposed to administrators.', status: 'offline', lastChecked: baseTime, detail: 'Unavailable while Main Hub is offline.' },
       { id: `${vehicleId}-back-fsr`, name: 'Backrest FSR Array ×6', shortName: 'Backrest FSR', placement: 'Backrest overlay', purpose: 'Pressure-distribution and posture-context sensing.', status: 'offline', lastChecked: baseTime, detail: 'Unavailable while Main Hub is offline.' },
       { id: `${vehicleId}-cush-fsr`, name: 'Cushion FSR Array ×3', shortName: 'Cushion FSR', placement: 'Seat cushion overlay', purpose: 'Seat occupancy and lower-body pressure-distribution context.', status: 'offline', lastChecked: baseTime, detail: 'Unavailable while Main Hub is offline.' },
       { id: `${vehicleId}-mpu`, name: 'MPU6050 IMU', shortName: 'MPU6050', placement: 'Seat frame', purpose: 'Road vibration and deceleration context; not a medical anomaly detector.', status: 'offline', lastChecked: baseTime, detail: 'Unavailable while Main Hub is offline.' },
@@ -18,8 +18,8 @@ const modulesFor = (vehicleId: string, degraded = false, offline = false): Senso
 
   return [
     { id: `${vehicleId}-hub`, name: 'SafeSeat Main Hub', shortName: 'Main Hub', placement: 'Central controller', purpose: 'Sensor fusion, state management, and system coordination.', status: 'operational', lastChecked: baseTime, detail: 'Connected and publishing session telemetry.' },
-    { id: `${vehicleId}-c1001`, name: 'C1001 mmWave Radar', shortName: 'C1001', placement: 'Front-facing, approximately 0.8–1.0 m from occupant', purpose: 'Presence, respiration rate, heart rate, and motion-related radar context.', status: degraded ? 'degraded' : 'operational', lastChecked: baseTime, detail: degraded ? 'Vitals available, but recent signal stability is below the preferred confidence band.' : 'Vitals and presence telemetry are available.' },
-    { id: `${vehicleId}-mlx`, name: 'MLX90614 IR Temperature', shortName: 'MLX90614', placement: 'Headrest', purpose: 'Non-contact surface temperature input with ambient/delta runtime context.', status: 'operational', lastChecked: baseTime, detail: 'Object temperature input is stable.' },
+    { id: `${vehicleId}-c1001`, name: 'C1001 mmWave Radar', shortName: 'C1001', placement: 'Front-facing, approximately 0.8–1.0 m from occupant', purpose: 'Local presence and physiological-signal context for SafeSeat fusion; exact readings are not exposed to administrators.', status: degraded ? 'degraded' : 'operational', lastChecked: baseTime, detail: degraded ? 'Signal-quality confidence is degraded; the Admin Module receives only the derived hardware/fusion status.' : 'Telemetry path is operational; exact physiological readings remain outside the Admin Module.' },
+    { id: `${vehicleId}-mlx`, name: 'MLX90614 IR Temperature', shortName: 'MLX90614', placement: 'Headrest', purpose: 'Local thermal context for SafeSeat fusion; exact temperature values are not exposed to administrators.', status: 'operational', lastChecked: baseTime, detail: 'Thermal telemetry path is operational; exact readings remain outside the Admin Module.' },
     { id: `${vehicleId}-back-fsr`, name: 'Backrest FSR Array ×6', shortName: 'Backrest FSR', placement: 'Backrest overlay', purpose: 'Pressure-distribution and posture-context sensing.', status: 'operational', lastChecked: baseTime, detail: 'All six backrest channels are responding.' },
     { id: `${vehicleId}-cush-fsr`, name: 'Cushion FSR Array ×3', shortName: 'Cushion FSR', placement: 'Seat cushion overlay', purpose: 'Seat occupancy and lower-body pressure-distribution context.', status: 'operational', lastChecked: baseTime, detail: 'All three cushion channels are responding.' },
     { id: `${vehicleId}-mpu`, name: 'MPU6050 IMU', shortName: 'MPU6050', placement: 'Seat frame', purpose: 'Road vibration and deceleration context; not a medical anomaly detector.', status: 'operational', lastChecked: baseTime, detail: 'Orientation compensation applied; road-context stream is available.' },
@@ -29,16 +29,16 @@ const modulesFor = (vehicleId: string, degraded = false, offline = false): Senso
 
 const vehicles: Vehicle[] = [
   {
-    id: 'SS-V01', plate: 'CAV 8151', label: 'Toyota Vios — Demo Unit', driverId: 'acc-driver-1', monitoredSeat: 'Front Passenger', occupant: { kind: 'registered', accountId: 'acc-occ-1' }, hubId: 'HUB-A7C2', connection: 'online', state: 'NORMAL', heartRate: 76, respirationRate: 17, objectTemperature: 35.8, camera: 'Standby', lastUpdate: t('2026-09-05T16:55:40+08:00'), modules: modulesFor('SS-V01')
+    id: 'SS-V01', plate: 'CAV 8151', label: 'Toyota Vios — Demo Unit', driverId: 'acc-driver-1', monitoredSeat: 'Front Passenger', occupant: { kind: 'registered', accountId: 'acc-occ-1' }, hubId: 'HUB-A7C2', connection: 'online', state: 'NORMAL', camera: 'Standby', lastUpdate: t('2026-09-05T16:55:40+08:00'), modules: modulesFor('SS-V01')
   },
   {
-    id: 'SS-V02', plate: 'NCR 4026', label: 'Fleet Unit 02', driverId: 'acc-driver-2', monitoredSeat: 'Rear Right', occupant: { kind: 'guest', sessionId: 'GST-260905-042', displayName: 'Guest passenger' }, hubId: 'HUB-C91F', connection: 'online', state: 'SUSPECTED', heartRate: 102, respirationRate: 23, objectTemperature: 36.1, camera: 'Standby', lastUpdate: t('2026-09-05T16:55:34+08:00'), modules: modulesFor('SS-V02', true)
+    id: 'SS-V02', plate: 'NCR 4026', label: 'Fleet Unit 02', driverId: 'acc-driver-2', monitoredSeat: 'Rear Right', occupant: { kind: 'guest', sessionId: 'GST-260905-042', displayName: 'Guest passenger' }, hubId: 'HUB-C91F', connection: 'online', state: 'SUSPECTED', camera: 'Standby', lastUpdate: t('2026-09-05T16:55:34+08:00'), modules: modulesFor('SS-V02', true)
   },
   {
-    id: 'SS-V03', plate: 'BGC 1188', label: 'Fleet Unit 03', driverId: 'acc-driver-3', monitoredSeat: 'Front Passenger', occupant: { kind: 'registered', accountId: 'acc-occ-3' }, hubId: 'HUB-F2D4', connection: 'online', state: 'VERIFYING', heartRate: 91, respirationRate: 21, objectTemperature: 35.6, camera: 'Verifying', lastUpdate: t('2026-09-05T16:55:37+08:00'), modules: modulesFor('SS-V03').map(m => m.shortName === 'Camera' ? { ...m, status: 'operational', detail: 'Verification request active. Current camera output is posture evidence only.' } : m)
+    id: 'SS-V03', plate: 'BGC 1188', label: 'Fleet Unit 03', driverId: 'acc-driver-3', monitoredSeat: 'Front Passenger', occupant: { kind: 'registered', accountId: 'acc-occ-3' }, hubId: 'HUB-F2D4', connection: 'online', state: 'VERIFYING', camera: 'Verifying', lastUpdate: t('2026-09-05T16:55:37+08:00'), modules: modulesFor('SS-V03').map(m => m.shortName === 'Camera' ? { ...m, status: 'operational', detail: 'Verification request active. Current camera output is posture evidence only.' } : m)
   },
   {
-    id: 'SS-V04', plate: 'LPA 7782', label: 'Fleet Unit 04', driverId: null, monitoredSeat: 'Front Passenger', occupant: null, hubId: 'HUB-8B01', connection: 'offline', state: 'CLEARED', heartRate: null, respirationRate: null, objectTemperature: null, camera: 'Unavailable', lastUpdate: t('2026-09-05T15:42:11+08:00'), modules: modulesFor('SS-V04', false, true)
+    id: 'SS-V04', plate: 'LPA 7782', label: 'Fleet Unit 04', driverId: null, monitoredSeat: 'Front Passenger', occupant: null, hubId: 'HUB-8B01', connection: 'offline', state: 'CLEARED', camera: 'Unavailable', lastUpdate: t('2026-09-05T15:42:11+08:00'), modules: modulesFor('SS-V04', false, true)
   }
 ];
 
@@ -56,9 +56,9 @@ export const seedState: SafeSeatState = {
   vehicles,
   incidents: [
     {
-      id: 'INC-260905-017', occurredAt: t('2026-09-05T16:44:18+08:00'), vehicleId: 'SS-V03', seat: 'Front Passenger', occupant: { kind: 'registered', accountId: 'acc-occ-3' }, category: 'Multi-sensor anomaly', triggerSummary: 'Sustained pressure deviation with abnormal vital-sign evidence prompted camera posture verification.', posture: 'Leaning Forward', stateAtPeak: 'EMERGENCY', status: 'ESCALATED', resolution: 'Awaiting administrator review.', smsEscalated: true,
+      id: 'INC-260905-017', occurredAt: t('2026-09-05T16:44:18+08:00'), vehicleId: 'SS-V03', seat: 'Front Passenger', occupant: { kind: 'registered', accountId: 'acc-occ-3' }, category: 'Multi-sensor anomaly', triggerSummary: 'Sustained multi-sensor anomaly evidence prompted event-based posture verification.', posture: 'Leaning Forward', stateAtPeak: 'EMERGENCY', status: 'ESCALATED', resolution: 'Awaiting administrator review.', smsEscalated: true,
       timeline: [
-        { time: t('2026-09-05T16:43:44+08:00'), title: 'Anomaly evidence accumulated', description: 'Pressure and physiological evidence crossed the runtime suspicion threshold.' },
+        { time: t('2026-09-05T16:43:44+08:00'), title: 'Anomaly evidence accumulated', description: 'Multiple derived anomaly signals crossed the runtime suspicion threshold.' },
         { time: t('2026-09-05T16:43:51+08:00'), title: 'Suspected Emergency', description: 'Fusion logic requested additional verification; no emergency decision was made by the camera.' },
         { time: t('2026-09-05T16:43:56+08:00'), title: 'Camera verification requested', description: 'ESP32-S3 camera activated for event-based posture verification.' },
         { time: t('2026-09-05T16:44:03+08:00'), title: 'Posture deviation observed', description: 'Camera returned Leaning Forward. This was treated as supporting posture evidence only.' },
@@ -67,9 +67,9 @@ export const seedState: SafeSeatState = {
       ]
     },
     {
-      id: 'INC-260905-016', occurredAt: t('2026-09-05T15:18:02+08:00'), vehicleId: 'SS-V01', seat: 'Front Passenger', occupant: { kind: 'registered', accountId: 'acc-occ-1' }, category: 'Transient physiological anomaly', triggerSummary: 'Short-lived vital-sign anomaly entered suspicion but normalized before escalation.', posture: 'Upright', stateAtPeak: 'VERIFYING', status: 'CLEARED', resolution: 'Cleared automatically after readings normalized and verification accepted upright posture.', smsEscalated: false,
+      id: 'INC-260905-016', occurredAt: t('2026-09-05T15:18:02+08:00'), vehicleId: 'SS-V01', seat: 'Front Passenger', occupant: { kind: 'registered', accountId: 'acc-occ-1' }, category: 'Transient sensor-fusion anomaly', triggerSummary: 'Short-lived derived anomaly evidence entered suspicion but normalized before escalation.', posture: 'Upright', stateAtPeak: 'VERIFYING', status: 'CLEARED', resolution: 'Cleared automatically after derived sensor evidence normalized and verification accepted upright posture.', smsEscalated: false,
       timeline: [
-        { time: t('2026-09-05T15:17:41+08:00'), title: 'Suspected Emergency', description: 'Physiological anomaly persisted long enough to request verification.' },
+        { time: t('2026-09-05T15:17:41+08:00'), title: 'Suspected Emergency', description: 'Derived anomaly evidence persisted long enough to request verification.' },
         { time: t('2026-09-05T15:17:48+08:00'), title: 'Camera verification requested', description: 'Camera activated only for the verification window.' },
         { time: t('2026-09-05T15:17:55+08:00'), title: 'Upright posture accepted', description: 'Current raw pose was normal and temporal acceptance passed.' },
         { time: t('2026-09-05T15:18:02+08:00'), title: 'Event cleared', description: 'Primary sensor evidence returned to normal; monitoring resumed.' }
@@ -81,15 +81,15 @@ export const seedState: SafeSeatState = {
         { time: t('2026-09-04T18:07:13+08:00'), title: 'Pressure anomaly detected', description: 'Backrest and cushion pressure distribution moved outside the current baseline.' },
         { time: t('2026-09-04T18:07:21+08:00'), title: 'Verification requested', description: 'Camera activated because the multi-sensor state required posture context.' },
         { time: t('2026-09-04T18:07:28+08:00'), title: 'Leaning Right observed', description: 'Posture deviation was recorded as supporting context.' },
-        { time: t('2026-09-04T18:07:39+08:00'), title: 'Readings normalized', description: 'Sensor evidence returned to baseline; no emergency escalation occurred.' }
+        { time: t('2026-09-04T18:07:39+08:00'), title: 'Sensor evidence normalized', description: 'Sensor evidence returned to baseline; no emergency escalation occurred.' }
       ]
     },
     {
-      id: 'INC-260903-009', occurredAt: t('2026-09-03T11:36:10+08:00'), vehicleId: 'SS-V01', seat: 'Front Passenger', occupant: { kind: 'registered', accountId: 'acc-occ-1' }, category: 'Thermal context anomaly', triggerSummary: 'Object-temperature delta became unstable while pressure context remained normal.', posture: 'Not requested', stateAtPeak: 'SUSPECTED', status: 'RESOLVED', resolution: 'Thermal reading rejected as unstable targeting context; no camera activation was required.', smsEscalated: false,
+      id: 'INC-260903-009', occurredAt: t('2026-09-03T11:36:10+08:00'), vehicleId: 'SS-V01', seat: 'Front Passenger', occupant: { kind: 'registered', accountId: 'acc-occ-1' }, category: 'Thermal-context confidence event', triggerSummary: 'Thermal confidence became unstable while pressure context remained normal.', posture: 'Not requested', stateAtPeak: 'SUSPECTED', status: 'RESOLVED', resolution: 'Thermal evidence was rejected as unstable targeting context; no camera activation was required.', smsEscalated: false,
       timeline: [
-        { time: t('2026-09-03T11:35:54+08:00'), title: 'Thermal context flagged', description: 'MLX object-minus-ambient delta changed abruptly.' },
+        { time: t('2026-09-03T11:35:54+08:00'), title: 'Thermal context flagged', description: 'MLX runtime confidence detected an abrupt thermal-context change.' },
         { time: t('2026-09-03T11:36:02+08:00'), title: 'Fusion confidence reduced', description: 'Pressure/posture context did not support a physiological event, so MLX evidence was down-weighted.' },
-        { time: t('2026-09-03T11:36:10+08:00'), title: 'Event resolved', description: 'Stable object-temperature readings returned without escalation.' }
+        { time: t('2026-09-03T11:36:10+08:00'), title: 'Event resolved', description: 'Thermal confidence returned to a stable state without escalation.' }
       ]
     }
   ],
@@ -97,8 +97,7 @@ export const seedState: SafeSeatState = {
     criticalNotifications: true,
     resolvedNotifications: false,
     healthWarnings: true,
-    compactDensity: false,
-    showVitalsInTables: true
+    compactDensity: false
   },
   lastDiagnosticAt: t('2026-09-05T16:51:00+08:00')
 };

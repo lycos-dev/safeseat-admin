@@ -15,8 +15,8 @@ function defaultModules(vehicleId: string): SensorModule[] {
   const at = nowIso();
   return [
     { id: `${vehicleId}-hub`, name: 'SafeSeat Main Hub', shortName: 'Main Hub', placement: 'Central controller', purpose: 'Sensor fusion, state management, and system coordination.', status: 'operational', lastChecked: at, detail: 'Ready for telemetry integration.' },
-    { id: `${vehicleId}-c1001`, name: 'C1001 mmWave Radar', shortName: 'C1001', placement: 'Front-facing, approximately 0.8–1.0 m from occupant', purpose: 'Presence, respiration rate, heart rate, and motion-related radar context.', status: 'operational', lastChecked: at, detail: 'Ready for telemetry integration.' },
-    { id: `${vehicleId}-mlx`, name: 'MLX90614 IR Temperature', shortName: 'MLX90614', placement: 'Headrest', purpose: 'Non-contact surface temperature with ambient/delta runtime context.', status: 'operational', lastChecked: at, detail: 'Ready for telemetry integration.' },
+    { id: `${vehicleId}-c1001`, name: 'C1001 mmWave Radar', shortName: 'C1001', placement: 'Front-facing, approximately 0.8–1.0 m from occupant', purpose: 'Local presence and physiological-signal context for SafeSeat fusion; exact readings are not exposed to administrators.', status: 'operational', lastChecked: at, detail: 'Ready for telemetry integration.' },
+    { id: `${vehicleId}-mlx`, name: 'MLX90614 IR Temperature', shortName: 'MLX90614', placement: 'Headrest', purpose: 'Local non-contact thermal context for SafeSeat fusion; exact temperature values are not exposed to administrators.', status: 'operational', lastChecked: at, detail: 'Ready for telemetry integration.' },
     { id: `${vehicleId}-back-fsr`, name: 'Backrest FSR Array ×6', shortName: 'Backrest FSR', placement: 'Backrest overlay', purpose: 'Pressure-distribution and posture-context sensing.', status: 'operational', lastChecked: at, detail: 'Ready for telemetry integration.' },
     { id: `${vehicleId}-cush-fsr`, name: 'Cushion FSR Array ×3', shortName: 'Cushion FSR', placement: 'Seat cushion overlay', purpose: 'Seat occupancy and lower-body pressure context.', status: 'operational', lastChecked: at, detail: 'Ready for telemetry integration.' },
     { id: `${vehicleId}-mpu`, name: 'MPU6050 IMU', shortName: 'MPU6050', placement: 'Seat frame', purpose: 'Road vibration and deceleration context.', status: 'operational', lastChecked: at, detail: 'Ready for telemetry integration.' },
@@ -58,9 +58,6 @@ export function Fleet() {
       hubId: form.hubId.trim().toUpperCase(),
       connection: 'online',
       state: 'NORMAL',
-      heartRate: null,
-      respirationRate: null,
-      objectTemperature: null,
       camera: 'Standby',
       lastUpdate: nowIso(),
       modules: defaultModules(id)

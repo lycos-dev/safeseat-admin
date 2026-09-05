@@ -2,6 +2,7 @@ import { Activity, Bell, CarFront, FileWarning, Gauge, LayoutDashboard, LogOut, 
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Brand } from './Brand';
+import { runtimeConfig } from '../config/runtime';
 import { useStore } from '../data/store';
 
 const nav = [
@@ -28,6 +29,7 @@ export function AppShell() {
   const navigate = useNavigate();
   const { state } = useStore();
   const unresolved = state.incidents.filter(i => i.status === 'ESCALATED').length;
+  const admin = state.accounts.find(account => account.role === 'Fleet Admin' && account.status === 'ACTIVE');
   const [title, subtitle] = titles[location.pathname] ?? titles['/'];
 
   useEffect(() => setMenuOpen(false), [location.pathname]);
@@ -71,9 +73,9 @@ export function AppShell() {
             <div><h1>{title}</h1><p>{subtitle}</p></div>
           </div>
           <div className="topbar__right">
-            <span className="mode-pill"><span className="pulse-dot" />Demo data</span>
+            {runtimeConfig.dataMode === 'demo' && <span className="mode-pill"><span className="pulse-dot" />Demo mode</span>}
             <button className="icon-button topbar__bell" aria-label="Notifications"><Bell size={20} />{unresolved > 0 && <span className="notification-dot" />}</button>
-            <div className="admin-chip"><div className="admin-chip__avatar"><UserRoundCog size={17} /></div><div><strong>Mara Santos</strong><span>Fleet Admin</span></div></div>
+            <div className="admin-chip"><div className="admin-chip__avatar"><UserRoundCog size={17} /></div><div><strong>{admin?.name ?? 'SafeSeat Admin'}</strong><span>{admin?.role ?? 'Fleet Administrator'}</span></div></div>
           </div>
         </header>
         <div className="page"><Outlet /></div>

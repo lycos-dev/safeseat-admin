@@ -80,8 +80,8 @@ export function Health() {
         <section className="panel">
           <SectionHeading eyebrow="CURRENT SENSOR ROLES" title="What each subsystem contributes" />
           <div className="role-list">
-            <div><Radio /><span><strong>C1001 mmWave</strong>Primary physiological input for presence, RR, HR, and motion-related radar context.</span></div>
-            <div><Thermometer /><span><strong>MLX90614</strong>Object-temperature model input with ambient, delta, and stability used as fusion confidence context.</span></div>
+            <div><Radio /><span><strong>C1001 mmWave</strong>Provides local presence and physiological-signal context to fusion. Exact readings are not part of the Admin Module.</span></div>
+            <div><Thermometer /><span><strong>MLX90614</strong>Provides local thermal context and confidence information to fusion. Exact temperature values are not exposed here.</span></div>
             <div><Activity /><span><strong>FSR arrays</strong>Backrest ×6 and cushion ×3 pressure-distribution context for occupancy and posture-related evidence.</span></div>
             <div><Gauge /><span><strong>MPU6050</strong>Road vibration/deceleration context only; not an occupant-motion or medical anomaly detector.</span></div>
             <div><Camera /><span><strong>ESP32-S3 camera</strong>Event-triggered posture verification after a sensor-fusion request.</span></div>
