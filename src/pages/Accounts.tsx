@@ -6,6 +6,7 @@ import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../components/Toast';
 import { useStore } from '../data/store';
 import type { Account, AccountRole } from '../types';
+import { runtimeConfig } from '../config/runtime';
 
 const fmt = (value: string) => new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
 
@@ -17,7 +18,7 @@ export function Accounts() {
   const [role, setRole] = useState<'All' | AccountRole>('All');
   const [selected, setSelected] = useState<Account | null>(null);
   const [addOpen, setAddOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', operatorId: '', role: 'Driver' as AccountRole });
+  const [form, setForm] = useState({ firebaseUid: '', name: '', email: '', operatorId: '', role: 'Driver' as AccountRole });
 
   const filtered = useMemo(() => state.accounts.filter(account => {
     const matchSearch = `${account.name} ${account.email} ${account.operatorId}`.toLowerCase().includes(query.toLowerCase());
@@ -26,8 +27,11 @@ export function Accounts() {
 
   const addAccount = (event: FormEvent) => {
     event.preventDefault();
+    const id = runtimeConfig.dataMode === 'firebase' ? form.firebaseUid.trim() : `acc-${Date.now()}`;
+    if (!id) return;
+    if (state.accounts.some(a => a.id === id)) { push('That account is already in the directory.'); return; }
     const account: Account = {
-      id: `acc-${Date.now()}`,
+      id,
       name: form.name.trim(),
       email: form.email.trim(),
       operatorId: form.operatorId.trim().toUpperCase(),
@@ -38,11 +42,15 @@ export function Accounts() {
     };
     dispatch({ type: 'ADD_ACCOUNT', payload: account });
     setAddOpen(false);
-    setForm({ name: '', email: '', operatorId: '', role: 'Driver' });
-    push(`${account.name} added.`);
+    setForm({ firebaseUid: '', name: '', email: '', operatorId: '', role: 'Driver' });
+    push(runtimeConfig.dataMode === 'firebase' ? `${account.name} added to the Admin-safe directory.` : `${account.name} added.`);
   };
 
   const toggle = (account: Account) => {
+    if (runtimeConfig.dataMode === 'firebase' && account.role === 'Fleet Admin') {
+      push('Fleet-admin authorization is managed through the protected admin_accounts record.');
+      return;
+    }
     dispatch({ type: 'TOGGLE_ACCOUNT', payload: account.id });
     setSelected(prev => prev?.id === account.id ? { ...account, status: account.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE' } : prev);
     push(`${account.name} ${account.status === 'ACTIVE' ? 'disabled' : 'enabled'}.`);
@@ -57,7 +65,7 @@ export function Accounts() {
       </div>
 
       <section className="panel">
-        <SectionHeading eyebrow="ACCESS & CONSENT" title="Account directory" description="Manage registered SafeSeat accounts and consent visibility. Guest occupants are session-only and do not require an account record." action={<button className="button button--primary" onClick={() => setAddOpen(true)}><UserPlus size={17} />Add account</button>} />
+        <SectionHeading eyebrow="ACCESS & CONSENT" title="Account directory" description={runtimeConfig.dataMode === 'firebase' ? "Manage the privacy-minimized SafeSeat account directory and consent visibility. Guest occupants remain session-only and do not require an account record." : "Manage registered SafeSeat accounts and consent visibility. Guest occupants are session-only and do not require an account record."} action={<button className="button button--primary" onClick={() => setAddOpen(true)}><UserPlus size={17} />{runtimeConfig.dataMode === 'firebase' ? 'Link registered user' : 'Add account'}</button>} />
         <div className="toolbar">
           <div className="search-box"><Search size={17} /><input placeholder="Search name, email, or operator ID…" value={query} onChange={e => setQuery(e.target.value)} /></div>
           <select className="filter-select" value={role} onChange={e => setRole(e.target.value as typeof role)}><option>All</option><option>Fleet Admin</option><option>Driver</option><option>Occupant</option></select>
@@ -91,18 +99,19 @@ export function Accounts() {
             <div className="consent-line"><div><strong>Emergency Escalation</strong><span>Permission associated with configured emergency workflow.</span></div>{selected.consent.emergencyEscalation ? <span className="consent-yes"><Check size={15} />Granted</span> : <span className="consent-no">Not granted</span>}</div>
           </div>
           <div className="notice notice--subtle"><ShieldCheck size={17} /><div><strong>Admin boundary</strong><p>This screen exposes consent state for administration. It does not let an administrator silently grant consent on behalf of the occupant.</p></div></div>
-          <div className="modal-actions"><button className={`button ${selected.status === 'ACTIVE' ? 'button--danger-soft' : 'button--primary'}`} onClick={() => toggle(selected)}>{selected.status === 'ACTIVE' ? 'Disable account' : 'Enable account'}</button></div>
+          <div className="modal-actions">{runtimeConfig.dataMode === 'firebase' && selected.role === 'Fleet Admin' ? <button className="button button--ghost" disabled>Admin access is provisioned separately</button> : <button className={`button ${selected.status === 'ACTIVE' ? 'button--danger-soft' : 'button--primary'}`} onClick={() => toggle(selected)}>{selected.status === 'ACTIVE' ? 'Disable account' : 'Enable account'}</button>}</div>
         </div>}
       </Modal>
 
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Add account" eyebrow="ACCOUNT MANAGEMENT" size="sm">
+      <Modal open={addOpen} onClose={() => setAddOpen(false)} title={runtimeConfig.dataMode === 'firebase' ? 'Link registered SafeSeat user' : 'Add account'} eyebrow="ACCOUNT MANAGEMENT" size="sm">
         <form className="form-stack" onSubmit={addAccount}>
+          {runtimeConfig.dataMode === 'firebase' && <Field label="Firebase Auth UID"><input required placeholder="Existing registered user's UID" value={form.firebaseUid} onChange={e => setForm(x => ({ ...x, firebaseUid: e.target.value }))} /></Field>}
           <Field label="Full name"><input required value={form.name} onChange={e => setForm(x => ({ ...x, name: e.target.value }))} /></Field>
           <Field label="Email"><input type="email" required value={form.email} onChange={e => setForm(x => ({ ...x, email: e.target.value }))} /></Field>
           <Field label="Operator ID"><input required placeholder="DRV-030" value={form.operatorId} onChange={e => setForm(x => ({ ...x, operatorId: e.target.value }))} /></Field>
-          <Field label="Role"><select value={form.role} onChange={e => setForm(x => ({ ...x, role: e.target.value as AccountRole }))}><option>Fleet Admin</option><option>Driver</option><option>Occupant</option></select></Field>
-          <p className="form-note">New accounts start with consent preferences disabled. Consent should be collected through the appropriate user flow.</p>
-          <div className="modal-actions"><button type="button" className="button button--ghost" onClick={() => setAddOpen(false)}>Cancel</button><button className="button button--primary" type="submit"><Plus size={17} />Add account</button></div>
+          <Field label="Role"><select value={form.role} onChange={e => setForm(x => ({ ...x, role: e.target.value as AccountRole }))}>{runtimeConfig.dataMode === 'demo' && <option>Fleet Admin</option>}<option>Driver</option><option>Occupant</option></select></Field>
+          <p className="form-note">{runtimeConfig.dataMode === 'firebase' ? 'This links an already-registered Firebase user into the privacy-minimized Admin directory; it does not create a new Firebase Authentication credential. Fleet-admin access is provisioned separately through admin_accounts.' : 'New demo accounts start with consent preferences disabled. Consent should be collected through the appropriate user flow.'}</p>
+          <div className="modal-actions"><button type="button" className="button button--ghost" onClick={() => setAddOpen(false)}>Cancel</button><button className="button button--primary" type="submit"><Plus size={17} />{runtimeConfig.dataMode === 'firebase' ? 'Link user' : 'Add account'}</button></div>
         </form>
       </Modal>
     </>

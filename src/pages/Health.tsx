@@ -4,6 +4,7 @@ import { SectionHeading } from '../components/PageParts';
 import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../components/Toast';
 import { useStore } from '../data/store';
+import { runtimeConfig } from '../config/runtime';
 
 const fmt = (value: string | null) => value ? new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : 'Not run';
 
@@ -36,6 +37,12 @@ export function Health() {
   const runDiagnostic = () => {
     if (!vehicle || running) return;
     setRunning(true);
+    if (runtimeConfig.dataMode === 'firebase') {
+      dispatch({ type: 'RUN_DIAGNOSTIC', payload: { vehicleId: vehicle.id, at: new Date().toISOString() } });
+      window.setTimeout(() => setRunning(false), 350);
+      push(`${vehicle.id} diagnostic request queued. Hardware status will update when the trusted SafeSeat sync path responds.`);
+      return;
+    }
     window.setTimeout(() => {
       dispatch({ type: 'RUN_DIAGNOSTIC', payload: { vehicleId: vehicle.id, at: new Date().toISOString() } });
       setRunning(false);

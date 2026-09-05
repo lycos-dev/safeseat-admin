@@ -1,48 +1,103 @@
-# SafeSeat Safety Control Center — Admin Web App V1.2
+# SafeSeat Safety Control Center — Admin Web App V1.3
 
-Privacy-first administrative prototype for the current SafeSeat architecture.
+Privacy-minimized SafeSeat Admin Module with two runtime data providers:
 
-## V1.2 changes
+- **Demo mode** — deterministic local records for manuscript screenshots and UI review.
+- **Firebase mode** — Firebase Authentication + Firestore using the same SafeSeat project as the mobile app.
 
-- Reworked Settings layout so rows, cards, and actions have clear spacing and do not visually merge.
-- Rebuilt toggle switches with fixed geometry and equal knob insets in both ON and OFF states.
-- Removed all exact physiological readings from the Admin Module data model and UI.
-- Removed the old “Show vitals” preference entirely; this privacy boundary is not administrator-configurable.
-- V1.2 deletes the retired V1.1 localStorage key on first load because the older prototype contained example HR/RR/temperature values.
-- Vehicle details now show only fusion state, camera state, hub connectivity, module health, and a privacy boundary.
-- Registered occupants and session-only **Guest** occupants remain distinct throughout Overview, Fleet, and Incident Logs.
-- Demo records remain centralized in `src/data/demoSeed.ts` for deterministic manuscript screenshots and UI/UAT review.
+## V1.3 backend integration
 
-## Admin privacy contract
+- Added Firebase Authentication for production-mode admin sign-in.
+- Added authorization through `admin_accounts/{uid}`; being a normal SafeSeat user is not enough to enter the Admin Module.
+- Added realtime Firestore subscriptions for account directory, vehicles, active monitoring sessions, incidents, hardware status, and per-admin settings.
+- Added Firebase writes for vehicle registration, account-directory status management, incident resolution, dashboard preferences, and privacy-limited diagnostic requests.
+- Kept demo mode fully isolated for deterministic paper screenshots.
+- Added Firestore rules/indexes and Firebase Hosting configuration.
+- Added a documented Main Hub/mobile/cloud boundary so the Admin site does not become a second safety controller.
+- Preserved Guest occupants as session-only identities.
+- Preserved the fixed privacy contract: exact HR, RR, temperature, FSR, MPU, and camera-frame data are not part of the Admin schema.
 
-The Admin Module intentionally does **not** display or persist:
+## Important account privacy design
 
-- exact heart-rate values;
-- exact respiration-rate values;
-- exact MLX temperature values;
-- individual FSR pressure values;
-- raw MPU samples;
-- camera frames or a continuous camera stream.
+The Admin Module uses a separate `account_directory` collection instead of querying private mobile profile documents directly. Firestore queries return whole documents, so using a minimized directory avoids downloading unrelated profile fields just to display an account name/role/consent state.
 
-The administrative interface receives only the minimum information needed for fleet operations: SafeSeat fusion state, hardware health/connectivity, occupant/session identity type, event-based posture-verification outcome when requested, incident metadata, and escalation/resolution state.
-
-This does not change the internal SafeSeat runtime. Sensors can still perform the measurements required by the local fusion logic; the Admin Module simply does not expose those raw measurements.
-
-## Demo data vs production data
-
-V1.2 intentionally keeps deterministic demonstration records for the manuscript figures and UI review. This is preferable to taking screenshots from an empty backend or waiting for a live incident just to populate the interface.
-
-The records are **not embedded in page components**. They live in:
+## Runtime architecture
 
 ```text
-src/data/demoSeed.ts
+Sensor nodes / Camera
+        │ ESP-NOW
+        ▼
+SafeSeat Main Hub
+(authoritative local fusion)
+        │ local SafeSeat API
+        ▼
+SafeSeat mobile app
+        │ privacy-minimized cloud sync
+        ▼
+Firebase Auth + Firestore
+        │
+        ▼
+SafeSeat Admin Web App
 ```
 
-Pages consume the shared store instead. During backend integration, replace the demo data provider/repository layer with the final SafeSeat backend/Firebase implementation while keeping the page components and privacy contract intact.
+The Admin Web App is not connected directly to each vehicle's ESP32 and does not make emergency decisions.
 
-A discreet `Demo mode` badge is shown in the top bar so demonstration records are not mistaken for live fleet data.
+## Run in demo mode
 
-## Current SafeSeat hardware represented
+```powershell
+Copy-Item .env.example .env
+npm install
+npm run dev
+```
+
+Keep:
+
+```env
+VITE_DATA_MODE=demo
+```
+
+Default demo credentials are defined in `.env.example` and are not used in Firebase mode.
+
+## Run with Firebase
+
+1. Copy the matching Firebase Web configuration from the existing `safeseat-app` environment into `.env`.
+2. Set:
+
+```env
+VITE_DATA_MODE=firebase
+```
+
+3. Create an authorized Firebase Auth user and matching `admin_accounts/<UID>` document.
+4. Start the app:
+
+```powershell
+npm install
+npm run dev
+```
+
+See `docs/FIREBASE_SETUP.md` for the exact setup sequence.
+
+## Firebase files
+
+```text
+firebase.json
+firestore.rules
+firestore.indexes.json
+docs/FIREBASE_SETUP.md
+docs/SAFESEAT_CLOUD_CONTRACT.md
+docs/MOBILE_CLOUD_SYNC_CONTRACT.md
+```
+
+If your existing SafeSeat Firebase project already has Firestore rules, **merge** the Admin collection rules into the project's rule file instead of replacing existing mobile-app rules.
+
+## Build checks
+
+```powershell
+npm run typecheck
+npm run build
+```
+
+## Current hardware represented
 
 - SafeSeat Main Hub
 - C1001 mmWave radar — front-facing, approximately 0.8–1.0 m from the monitored occupant
@@ -52,27 +107,6 @@ A discreet `Demo mode` badge is shown in the top bar so demonstration records ar
 - MPU6050 — seat-frame road/vibration context
 - ESP32-S3 camera — event-based posture verification only
 
-## Run
+## Privacy contract
 
-```bash
-npm install
-npm run dev
-```
-
-Build validation:
-
-```bash
-npm run typecheck
-npm run build
-```
-
-## Demo login
-
-The defaults are development-only and may be overridden with `.env` values based on `.env.example`.
-
-```text
-Email:    admin@safeseat.demo
-Password: SafeSeat2026!
-```
-
-Do not use demo authentication for production deployment.
+The Admin Module does not display or persist exact physiological readings, raw sensor arrays, or camera media. Admin-facing records contain only operational/derived states necessary for fleet management and incident handling.

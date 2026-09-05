@@ -1,9 +1,10 @@
-import { Activity, Bell, CarFront, FileWarning, Gauge, LayoutDashboard, LogOut, Menu, Settings, ShieldCheck, UserRoundCog, Users, X } from 'lucide-react';
+import { Activity, Bell, CarFront, FileWarning, LayoutDashboard, LogOut, Menu, Settings, ShieldCheck, UserRoundCog, Users, X } from 'lucide-react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Brand } from './Brand';
 import { runtimeConfig } from '../config/runtime';
 import { useStore } from '../data/store';
+import { useAuth } from '../auth/AuthProvider';
 
 const nav = [
   { to: '/', label: 'Overview', icon: LayoutDashboard },
@@ -15,29 +16,33 @@ const nav = [
 ];
 
 const titles: Record<string, [string, string]> = {
-  '/': ['Overview Dashboard', 'Live fleet monitoring and safety-event awareness'],
+  '/': ['Overview Dashboard', 'Fleet monitoring and safety-event awareness'],
   '/fleet': ['Fleet & Seat Management', 'Vehicle, SafeSeat unit, seat, and occupant relationships'],
   '/accounts': ['Account Management', 'Administrative access, roles, and consent visibility'],
   '/incidents': ['Incident Logs', 'Traceable safety-event history and administrator resolution'],
-  '/health': ['System Health Monitor', 'Hardware connectivity and diagnostic status'],
-  '/settings': ['Admin Settings', 'Dashboard preferences and prototype controls']
+  '/health': ['System Health Monitor', 'Privacy-minimized hardware connectivity and diagnostic status'],
+  '/settings': ['Admin Settings', 'Dashboard preferences and data-source controls']
 };
 
 export function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { state } = useStore();
+  const { state, syncStatus } = useStore();
+  const { identity, signOut } = useAuth();
   const unresolved = state.incidents.filter(i => i.status === 'ESCALATED').length;
-  const admin = state.accounts.find(account => account.role === 'Fleet Admin' && account.status === 'ACTIVE');
   const [title, subtitle] = titles[location.pathname] ?? titles['/'];
 
   useEffect(() => setMenuOpen(false), [location.pathname]);
 
-  const signOut = () => {
-    sessionStorage.removeItem('safeseat-admin-auth');
-    navigate('/login');
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login', { replace: true });
   };
+
+  const sourceLabel = runtimeConfig.dataMode === 'demo'
+    ? 'Demo mode'
+    : syncStatus === 'live' ? 'Firebase live' : syncStatus === 'error' ? 'Sync issue' : 'Connecting';
 
   return (
     <div className={`app-shell ${state.settings.compactDensity ? 'app-shell--compact' : ''}`}>
@@ -60,9 +65,9 @@ export function AppShell() {
         </nav>
         <div className="sidebar__privacy">
           <ShieldCheck size={19} />
-          <div><strong>Non-diagnostic system</strong><span>Privacy-first, event-based verification</span></div>
+          <div><strong>Privacy-minimized admin</strong><span>Derived states • event-based verification</span></div>
         </div>
-        <button className="sidebar__signout" onClick={signOut}><LogOut size={18} />Sign out</button>
+        <button className="sidebar__signout" onClick={handleSignOut}><LogOut size={18} />Sign out</button>
       </aside>
       {menuOpen && <div className="sidebar-scrim" onClick={() => setMenuOpen(false)} />}
 
@@ -73,9 +78,9 @@ export function AppShell() {
             <div><h1>{title}</h1><p>{subtitle}</p></div>
           </div>
           <div className="topbar__right">
-            {runtimeConfig.dataMode === 'demo' && <span className="mode-pill"><span className="pulse-dot" />Demo mode</span>}
+            <span className={`mode-pill ${runtimeConfig.dataMode === 'firebase' && syncStatus === 'error' ? 'mode-pill--error' : ''}`}><span className="pulse-dot" />{sourceLabel}</span>
             <button className="icon-button topbar__bell" aria-label="Notifications"><Bell size={20} />{unresolved > 0 && <span className="notification-dot" />}</button>
-            <div className="admin-chip"><div className="admin-chip__avatar"><UserRoundCog size={17} /></div><div><strong>{admin?.name ?? 'SafeSeat Admin'}</strong><span>{admin?.role ?? 'Fleet Administrator'}</span></div></div>
+            <div className="admin-chip"><div className="admin-chip__avatar"><UserRoundCog size={17} /></div><div><strong>{identity?.name ?? 'SafeSeat Admin'}</strong><span>{identity?.role ?? 'Fleet Administrator'}</span></div></div>
           </div>
         </header>
         <div className="page"><Outlet /></div>

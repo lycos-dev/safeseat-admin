@@ -8,6 +8,7 @@ import { VehicleDetail } from '../components/VehicleDetail';
 import { useToast } from '../components/Toast';
 import { useStore } from '../data/store';
 import type { SensorModule, Vehicle } from '../types';
+import { runtimeConfig } from '../config/runtime';
 
 const nowIso = () => new Date().toISOString();
 
@@ -56,7 +57,7 @@ export function Fleet() {
       monitoredSeat: form.seat,
       occupant: null,
       hubId: form.hubId.trim().toUpperCase(),
-      connection: 'online',
+      connection: runtimeConfig.dataMode === 'firebase' ? 'offline' : 'online',
       state: 'NORMAL',
       camera: 'Standby',
       lastUpdate: nowIso(),

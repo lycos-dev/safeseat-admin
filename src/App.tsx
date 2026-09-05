@@ -7,10 +7,12 @@ import { Health } from './pages/Health';
 import { Incidents } from './pages/Incidents';
 import { Login } from './pages/Login';
 import { SettingsPage } from './pages/Settings';
+import { useAuth } from './auth/AuthProvider';
 
 function ProtectedLayout() {
   const location = useLocation();
-  const authenticated = sessionStorage.getItem('safeseat-admin-auth') === 'true';
+  const { ready, authenticated } = useAuth();
+  if (!ready) return <div className="route-loading">Connecting to SafeSeat…</div>;
   return authenticated ? <AppShell /> : <Navigate to="/login" replace state={{ from: location.pathname }} />;
 }
 
