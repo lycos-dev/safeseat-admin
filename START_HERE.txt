@@ -1,32 +1,45 @@
-SAFESEAT ADMIN V1.4 — FIRST RUN
-================================
+SAFESEAT ADMIN V1.5 — MOBILE / FIREBASE INTEGRATION
+===================================================
 
-This ZIP is already configured for the shared SafeSeat Firebase project and starts in Firebase mode.
-The Mobile App does NOT need to be finalized yet.
+This Admin build is paired with the updated SafeSeat mobile app and uses the
+same safeseat-app Firebase project.
 
-1) Open PowerShell in this folder.
+IMPORTANT: Your existing Firebase Authentication Admin login is kept. You do
+not need to recreate it if you can already sign in.
 
-2) Install packages:
+1) Open PowerShell in this folder and install packages:
    npm install
 
-3) Firebase Console > Project Settings > Service Accounts > Generate new private key.
-   Save the downloaded JSON in this folder as:
-   service-account.json
+2) Create .env from .env.example if this checkout does not already have your
+   local .env. Keep:
+   VITE_DATA_MODE=firebase
 
-   IMPORTANT: Keep this file private. Do not send or commit it.
+3) DEPLOY THE UPDATED FIRESTORE RULES before testing the mobile integration:
+   firebase login
+   firebase use safeseat-app
+   firebase deploy --only firestore:rules,firestore:indexes
 
-4) Create/update YOUR real Admin login:
-   npm run setup-admin -- --email "YOUR_EMAIL" --password "YOUR_STRONG_PASSWORD" --name "SafeSeat Administrator"
+   If Firebase CLI is not installed:
+   npm install -g firebase-tools
 
-5) While the Mobile App is unfinished, create safe Firebase test data:
-   npm run seed-firebase-demo -- --admin-email "YOUR_EMAIL"
-
-6) Start the Admin Web App:
-   npm run dev
-
-7) Sign in using the email/password from step 4.
-
-When real Mobile App cloud synchronization is ready, remove the synthetic Firebase records:
+4) If the old synthetic Firebase dataset is still present, place your private
+   service-account.json in this folder temporarily and run:
    npm run clear-firebase-demo
 
-For details, read docs/FIREBASE_SETUP.md.
+   service-account.json is Git-ignored. Never commit or send it.
+
+5) Start Admin:
+   npm run dev
+
+6) Start the paired mobile app, sign in, assign the SafeSeat hardware seat, and
+   begin monitoring. Real privacy-minimized records will then populate:
+   - account_directory
+   - vehicles
+   - hardware_status
+   - monitoring_sessions
+   - incidents (only on a real Main Hub emergency)
+
+No exact HR, RR, temperature, FSR values, MPU samples, or camera frames are
+written to the Admin collections.
+
+Read SAFESEAT_V1.5_MOBILE_INTEGRATION_NOTES.md for the integration details.

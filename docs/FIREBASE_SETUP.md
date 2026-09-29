@@ -1,10 +1,10 @@
-# Firebase Setup — SafeSeat Admin V1.4
+# Firebase Setup — SafeSeat Admin V1.5
 
 ## Shared Firebase project
 
 The Admin uses the existing `safeseat-app` Firebase project. Do not create a second Firebase project for the Admin Module.
 
-The supplied `.env` and `.env.example` already contain the Firebase Web configuration and the privacy-minimized Admin collection names. Firebase Web configuration is client configuration; the Firebase **service-account private key is not included** and must remain private.
+The supplied `.env.example` contains the Firebase Web configuration and the privacy-minimized Admin collection names. Firebase Web configuration is client configuration; the Firebase **service-account private key is not included** and must remain private.
 
 ## 1. Install dependencies
 
@@ -99,7 +99,7 @@ The cleanup intentionally does not delete the real admin account.
 
 ## 6. Run Firebase mode
 
-`.env` is already set to:
+Your local `.env` should be set to:
 
 ```env
 VITE_DATA_MODE=firebase
@@ -113,11 +113,11 @@ npm run dev
 
 Sign in with the credentials supplied to `setup-admin`.
 
-## 7. Expected behavior before Mobile sync is finalized
+## 7. Paired Mobile integration
 
-With no seed data, successful Firebase login can legitimately show an empty fleet/account/incident dataset.
+With the paired updated SafeSeat mobile app and these Firestore rules deployed, the Admin now receives privacy-minimized account, vehicle, active-session, module-health, and real emergency incident records.
 
-With the synthetic seed installed, the Firebase-backed UI can be tested for:
+Synthetic seed data remains optional for isolated UI testing:
 
 - login/logout and admin authorization;
 - realtime account directory;
@@ -128,7 +128,7 @@ With the synthetic seed installed, the Firebase-backed UI can be tested for:
 - dashboard preferences;
 - diagnostic-request creation.
 
-Actual Main Hub/Mobile-generated records remain a later integration step.
+Main Hub/Mobile-generated records now use the same collections directly; remove synthetic seed data before live/UAT integration testing.
 
 ## Security notes
 

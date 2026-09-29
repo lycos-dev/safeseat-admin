@@ -1,6 +1,6 @@
 # SafeSeat Mobile → Firestore Admin Sync Contract
 
-The Admin web app is now ready to consume Firebase data, but the Main Hub should remain the local source of truth. The next integration step in `safeseat-app` is a small cloud-sync layer that takes the **already-derived** SafeSeat status received from the Main Hub local API and mirrors only approved fields to Firestore.
+SafeSeat Admin V1.5 and the paired mobile build now implement this contract. The Main Hub remains the local source of truth; the mobile cloud-sync layer mirrors only **already-derived** SafeSeat status to Firestore.
 
 ## Never upload to Admin collections
 
@@ -21,8 +21,11 @@ Approved shape:
   ownerUid: string;
   vehicleId: string;
   seat: string;
-  occupantType: 'registered' | 'guest';
+  occupantType: 'registered' | 'profile' | 'guest';
   occupantUserId?: string;
+  profileOwnerUid?: string;
+  profileId?: string;
+  profileDisplayName?: string;
   guestSessionId?: string;
   guestDisplayName?: string;
   fusionState: 'NORMAL' | 'SUSPECTED' | 'VERIFYING' | 'EMERGENCY' | 'CLEARED';
@@ -67,3 +70,15 @@ Guests remain session-scoped. Do not create a Firebase Auth user or `account_dir
 ## Offline behavior
 
 Core SafeSeat monitoring and emergency logic must continue locally even when internet/Firebase is unavailable. Cloud sync is supplementary administrative visibility and history, not part of the safety decision loop.
+
+
+## Implemented lifecycle
+
+- Signing into the mobile app refreshes `account_directory/{uid}` with privacy-minimized driver information and consent flags.
+- Starting monitoring creates/refreshes the configured vehicle, hardware-health record, and one active session.
+- Main Hub state and module health are heartbeat-synchronized while monitoring is active.
+- A real Main Hub `EMERGENCY` creates one retained incident for that cloud session. Local researcher/UAT simulation does not create cloud incidents.
+- Successful real SMS escalation updates the matching incident's `smsEscalated` flag.
+- Ending monitoring sets the cloud session inactive / cleared while keeping the incident history.
+
+Saved dependent profiles use `occupantType: profile`; they are not presented as independent Firebase accounts.

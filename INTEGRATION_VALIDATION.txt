@@ -1,0 +1,13 @@
+SafeSeat Admin V1.5 integration validation
+==========================================
+- JSON configuration files parsed successfully.
+- Admin provisioning/seed/cleanup helper scripts pass Node syntax checks.
+- Modified TypeScript/TSX files pass syntax-oriented TypeScript checks.
+- Firestore contract includes mobile-owned account, vehicle, session, incident,
+  hardware-health, and diagnostic paths with raw-telemetry field blocking.
+- Settings toggle/button geometry fix is retained.
+
+A full production npm build was not completed in the packaging environment
+because dependency installation timed out. Run locally after npm install:
+  npm run typecheck
+  npm run build

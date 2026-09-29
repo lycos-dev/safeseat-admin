@@ -29,6 +29,18 @@ service cloud.firestore {
       return value in ['operational', 'degraded', 'offline', 'standby'];
     }
 
+    function ownsVehicle(vehicleId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/vehicles/$(vehicleId))
+        && get(/databases/$(database)/documents/vehicles/$(vehicleId)).data.ownerUid == request.auth.uid;
+    }
+
+    function isActiveMobileUser() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/account_directory/$(request.auth.uid))
+        && get(/databases/$(database)/documents/account_directory/$(request.auth.uid)).data.status == 'ACTIVE';
+    }
+
     function safeAccountDirectory(data) {
       return noPrivateTelemetry(data)
         && data.keys().hasOnly([
@@ -42,34 +54,56 @@ service cloud.firestore {
         ]));
     }
 
+    function safeVehicle(data) {
+      return noPrivateTelemetry(data)
+        && data.keys().hasOnly([
+          'ownerUid', 'plate', 'label', 'driverId', 'monitoredSeat', 'hubId',
+          'connection', 'createdAt', 'updatedAt'
+        ])
+        && (!('ownerUid' in data) || data.ownerUid == null || data.ownerUid is string)
+        && (!('driverId' in data) || data.driverId == null || data.driverId is string)
+        && (!('connection' in data) || data.connection in ['online', 'offline']);
+    }
+
+    function validOccupant(data) {
+      return data.occupantType in ['registered', 'profile', 'guest']
+        && (data.occupantType != 'registered' || data.occupantUserId is string)
+        && (data.occupantType != 'profile' || (
+          data.profileOwnerUid is string
+          && data.profileId is string
+          && data.profileDisplayName is string
+        ))
+        && (data.occupantType != 'guest' || data.guestSessionId is string);
+    }
+
     function safeSession(data) {
       return noPrivateTelemetry(data)
         && data.keys().hasOnly([
           'ownerUid', 'vehicleId', 'seat', 'occupantType', 'occupantUserId',
+          'profileOwnerUid', 'profileId', 'profileDisplayName',
           'guestSessionId', 'guestDisplayName', 'fusionState', 'cameraState',
           'active', 'lastUpdate', 'updatedAt'
         ])
         && data.ownerUid is string
         && data.vehicleId is string
-        && data.occupantType in ['registered', 'guest']
+        && validOccupant(data)
         && data.fusionState in ['NORMAL', 'SUSPECTED', 'VERIFYING', 'EMERGENCY', 'CLEARED']
         && data.cameraState in ['Standby', 'Verifying', 'Unavailable']
-        && data.active is bool
-        && (data.occupantType != 'registered' || data.occupantUserId is string)
-        && (data.occupantType != 'guest' || data.guestSessionId is string);
+        && data.active is bool;
     }
 
     function safeIncident(data) {
       return noPrivateTelemetry(data)
         && data.keys().hasOnly([
           'ownerUid', 'vehicleId', 'seat', 'occupantType', 'occupantUserId',
+          'profileOwnerUid', 'profileId', 'profileDisplayName',
           'guestSessionId', 'guestDisplayName', 'category', 'triggerSummary',
           'posture', 'stateAtPeak', 'status', 'resolution', 'smsEscalated',
           'timeline', 'occurredAt', 'createdAt', 'updatedAt', 'resolvedAt'
         ])
         && data.ownerUid is string
         && data.vehicleId is string
-        && data.occupantType in ['registered', 'guest']
+        && validOccupant(data)
         && data.stateAtPeak in ['NORMAL', 'SUSPECTED', 'VERIFYING', 'EMERGENCY', 'CLEARED']
         && data.status in ['ESCALATED', 'RESOLVED', 'CLEARED']
         && data.smsEscalated is bool;
@@ -83,6 +117,7 @@ service cloud.firestore {
         ])
         && data.ownerUid is string
         && data.vehicleId is string
+        && validModuleStatus(data.overallStatus)
         && validModuleStatus(data.mainHub)
         && validModuleStatus(data.c1001)
         && validModuleStatus(data.mlx90614)
@@ -92,39 +127,33 @@ service cloud.firestore {
         && validModuleStatus(data.camera);
     }
 
-    // ── Mobile app rules (safeseat-app) ──────────────────────────────
+    // ── Mobile app private namespace ──────────────────────────────────
 
-    // Main account profile
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if signedIn() && request.auth.uid == userId;
 
-      // Dependent/family member profiles
       match /profiles/{profileId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if signedIn() && request.auth.uid == userId;
       }
 
-      // App preferences (metric/imperial, etc.)
       match /settings/{settingId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if signedIn() && request.auth.uid == userId;
       }
 
-      // Emergency contacts
       match /emergencyContacts/{contactId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if signedIn() && request.auth.uid == userId;
       }
 
-      // Live trip / seat monitoring state
       match /activeTrip/{tripId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if signedIn() && request.auth.uid == userId;
       }
 
-      // Archived past trips
       match /tripHistory/{tripId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if signedIn() && request.auth.uid == userId;
       }
     }
 
-    // ── Admin module rules ───────────────────────────────────────────
+    // ── Shared privacy-minimized Admin/mobile contract ───────────────
 
     match /admin_accounts/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
@@ -132,7 +161,7 @@ service cloud.firestore {
     }
 
     match /account_directory/{accountId} {
-      allow read: if isAdmin();
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == accountId);
       allow create: if safeAccountDirectory(request.resource.data)
         && (
           (isAdmin()
@@ -148,33 +177,50 @@ service cloud.firestore {
             && request.auth.uid == accountId
             && request.resource.data.status == resource.data.status
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-              'name', 'email', 'operatorId', 'role', 'consent', 'lastActive', 'updatedAt'
+              'name', 'email', 'operatorId', 'role', 'consent', 'lastActive', 'updatedAt', 'provisioningStatus'
             ]))
         );
       allow delete: if false;
     }
 
     match /vehicles/{vehicleId} {
-      allow read: if isAdmin();
-      allow create, update: if isAdmin() && noPrivateTelemetry(request.resource.data);
+      allow read: if isAdmin() || (signedIn() && (resource.data.ownerUid == request.auth.uid || resource.data.driverId == request.auth.uid));
+      allow create: if safeVehicle(request.resource.data)
+        && (
+          isAdmin()
+          || (isActiveMobileUser()
+            && request.resource.data.ownerUid == request.auth.uid
+            && request.resource.data.driverId == request.auth.uid)
+        );
+      allow update: if safeVehicle(request.resource.data)
+        && (
+          isAdmin()
+          || (isActiveMobileUser()
+            && request.resource.data.ownerUid == request.auth.uid
+            && request.resource.data.driverId == request.auth.uid
+            && (
+              resource.data.ownerUid == request.auth.uid
+              || (!('ownerUid' in resource.data) && resource.data.driverId == request.auth.uid)
+            ))
+        );
       allow delete: if false;
     }
 
     match /monitoring_sessions/{sessionId} {
       allow read: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
-      allow create: if signedIn()
+      allow create: if isActiveMobileUser()
         && request.resource.data.ownerUid == request.auth.uid
         && safeSession(request.resource.data);
-      allow update: if signedIn()
+      allow update: if isActiveMobileUser()
         && resource.data.ownerUid == request.auth.uid
         && request.resource.data.ownerUid == request.auth.uid
         && safeSession(request.resource.data);
-      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      allow delete: if isActiveMobileUser() && resource.data.ownerUid == request.auth.uid;
     }
 
     match /incidents/{incidentId} {
       allow read: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
-      allow create: if signedIn()
+      allow create: if isActiveMobileUser()
         && request.resource.data.ownerUid == request.auth.uid
         && safeIncident(request.resource.data);
       allow update: if
@@ -183,21 +229,24 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'status', 'resolution', 'resolvedAt', 'updatedAt'
           ]))
-        || (signedIn()
+        || (isActiveMobileUser()
           && resource.data.ownerUid == request.auth.uid
           && request.resource.data.ownerUid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['smsEscalated', 'updatedAt'])
           && safeIncident(request.resource.data));
       allow delete: if false;
     }
 
     match /hardware_status/{vehicleId} {
       allow read: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
-      allow create: if signedIn()
+      allow create: if isActiveMobileUser()
         && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.vehicleId == vehicleId
         && safeHardware(request.resource.data);
-      allow update: if signedIn()
+      allow update: if isActiveMobileUser()
         && resource.data.ownerUid == request.auth.uid
         && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.vehicleId == vehicleId
         && safeHardware(request.resource.data);
       allow delete: if false;
     }
@@ -211,7 +260,7 @@ service cloud.firestore {
     }
 
     match /diagnostic_requests/{requestId} {
-      allow read: if isAdmin();
+      allow read: if isAdmin() || (isActiveMobileUser() && ownsVehicle(resource.data.vehicleId));
       allow create: if isAdmin()
         && request.resource.data.keys().hasOnly([
           'vehicleId', 'requestedBy', 'status', 'requestedAt', 'privacyContract'
@@ -220,10 +269,19 @@ service cloud.firestore {
         && request.resource.data.status == 'PENDING'
         && request.resource.data.privacyContract == 'DERIVED_HEALTH_ONLY'
         && noPrivateTelemetry(request.resource.data);
-      allow update, delete: if false;
+      allow update: if isActiveMobileUser() && ownsVehicle(resource.data.vehicleId)
+        && request.resource.data.vehicleId == resource.data.vehicleId
+        && request.resource.data.requestedBy == resource.data.requestedBy
+        && request.resource.data.privacyContract == resource.data.privacyContract
+        && request.resource.data.status == 'COMPLETE'
+        && request.resource.data.result in ['operational', 'degraded', 'offline']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'result', 'completedAt', 'updatedAt'
+        ])
+        && noPrivateTelemetry(request.resource.data);
+      allow delete: if false;
     }
 
-    // Deny everything else by default
     match /{document=**} {
       allow read, write: if false;
     }

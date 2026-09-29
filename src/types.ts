@@ -8,6 +8,7 @@ export type Posture = 'Not requested' | 'Upright' | 'Leaning Forward' | 'Leaning
 
 export type OccupantReference =
   | { kind: 'registered'; accountId: string }
+  | { kind: 'profile'; ownerUid: string; profileId: string; displayName: string }
   | { kind: 'guest'; sessionId: string; displayName?: string }
   | null;
 

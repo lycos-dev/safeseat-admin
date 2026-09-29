@@ -8,6 +8,7 @@ export function OccupantLabel({ occupant, compact = false }: { occupant: Occupan
   if (!occupant) return <span className="muted">No occupant</span>;
 
   const isGuest = occupant.kind === 'guest';
+  const isProfile = occupant.kind === 'profile';
   return (
     <div className={`occupant-label ${compact ? 'occupant-label--compact' : ''}`}>
       <span className={`occupant-label__icon ${isGuest ? 'occupant-label__icon--guest' : ''}`}>
@@ -18,6 +19,7 @@ export function OccupantLabel({ occupant, compact = false }: { occupant: Occupan
         {!compact && <small>{occupantSecondaryText(occupant, accountById)}</small>}
       </span>
       {isGuest && <span className="guest-badge">Guest</span>}
+      {isProfile && <span className="guest-badge guest-badge--profile">Profile</span>}
     </div>
   );
 }

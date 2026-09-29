@@ -26,7 +26,8 @@ export function Dashboard() {
   const degraded = allModules.filter(m => m.status === 'degraded' || m.status === 'offline').length;
   const fleetHealth = allModules.length
     ? Math.round((allModules.filter(m => m.status === 'operational' || m.status === 'standby').length / allModules.length) * 100)
-    : 100;
+    : null;
+  const activeVehicles = state.vehicles.filter(v => isOccupied(v.occupant));
 
   const distribution = useMemo(() => ({
     normal: state.vehicles.filter(v => v.state === 'NORMAL' || v.state === 'CLEARED').length,
@@ -53,7 +54,7 @@ export function Dashboard() {
         <MetricCard icon={CarFront} label="Registered vehicles" value={state.vehicles.length} detail={`${online} currently online`} />
         <MetricCard icon={Users} label="Live sessions" value={live} detail={guestSessions ? `${guestSessions} guest session${guestSessions > 1 ? 's' : ''} active` : 'Occupied monitored seats'} tone="gold" />
         <MetricCard icon={AlertTriangle} label="Escalated incidents" value={escalated.length} detail="Administrator attention required" tone={escalated.length ? 'red' : 'green'} />
-        <MetricCard icon={Activity} label="Fleet hardware health" value={`${fleetHealth}%`} detail={`${degraded} degraded/offline module states`} tone={degraded ? 'gold' : 'green'} />
+        <MetricCard icon={Activity} label="Fleet hardware health" value={fleetHealth === null ? '—' : `${fleetHealth}%`} detail={fleetHealth === null ? 'No hardware status received yet' : `${degraded} degraded/offline module states`} tone={degraded ? 'gold' : 'green'} />
       </div>
 
       <div className="dashboard-grid dashboard-grid--wide">
@@ -63,7 +64,7 @@ export function Dashboard() {
             <table className="data-table data-table--sessions">
               <thead><tr><th>Vehicle</th><th>Monitored seat</th><th>Occupant</th><th>Fusion state</th><th>Camera</th><th>Updated</th></tr></thead>
               <tbody>
-                {state.vehicles.map(vehicle => (
+                {activeVehicles.map(vehicle => (
                   <tr key={vehicle.id} className="clickable-row" onClick={() => setSelected(vehicle)}>
                     <td><div className="table-primary"><span className={`connection-dot connection-dot--${vehicle.connection}`} /><div><strong>{vehicle.id}</strong><span>{vehicle.plate}</span></div></div></td>
                     <td>{vehicle.monitoredSeat}</td>
@@ -73,6 +74,9 @@ export function Dashboard() {
                     <td className="muted">{fmtTime(vehicle.lastUpdate)}</td>
                   </tr>
                 ))}
+                {activeVehicles.length === 0 && (
+                  <tr><td colSpan={6}><div className="empty-state"><strong>No active monitoring session</strong><p>Start monitoring from the SafeSeat mobile app to populate this live view.</p></div></td></tr>
+                )}
               </tbody>
             </table>
           </div>

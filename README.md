@@ -1,20 +1,23 @@
-# SafeSeat Safety Control Center — Admin Web App V1.4
+# SafeSeat Safety Control Center — Admin Web App V1.5
 
 Privacy-minimized SafeSeat Admin Module with two runtime providers:
 
 - **Firebase mode** — Firebase Authentication + Firestore using the same `safeseat-app` Firebase project.
 - **Demo mode** — deterministic local records for screenshots/UI review.
 
-The included `.env` is already configured for the shared SafeSeat Firebase Web project and starts in `firebase` mode. No administrator password or Firebase service-account private key is included in this ZIP.
+The included `.env.example` is configured for the shared SafeSeat Firebase Web project and defaults to `firebase` mode; copy/merge it into your local `.env`. No administrator password or Firebase service-account private key is included in this ZIP.
 
-## V1.4 changes
+## V1.5 changes
 
 - Firebase mode prepared as the default runtime for the Admin Web App.
 - Removed hard-coded Firebase admin credentials from the provisioning script.
 - Added secure CLI-based admin provisioning with Firebase Admin SDK.
-- Added a Firebase synthetic-data seeder so the Admin can be fully tested before the Mobile App is finalized.
+- Retained the optional Firebase synthetic-data seeder for isolated Admin UI testing.
 - Added a matching cleanup command for synthetic Firebase records.
 - Preserved `admin_accounts/{uid}` as the protected authorization gate in addition to Firebase Authentication.
+- Added the paired Mobile App → Firestore → Admin flow for account directory, vehicle identity, live sessions, hardware health, incidents, and diagnostic responses.
+- Added saved-profile occupant support without treating saved profiles as Firebase login accounts.
+- Added stale-heartbeat handling so disconnected mobile/hardware bridges become offline in Admin instead of remaining falsely live.
 - Preserved realtime Firestore subscriptions and privacy-minimized writes for vehicles, incidents, settings, account-directory records, and diagnostic requests.
 - Fixed Settings switch geometry so the white knob stays centered inside the track in both states.
 - Normalized primary green button states.
@@ -30,7 +33,7 @@ SafeSeat Main Hub
         │ local SafeSeat API
         ▼
 SafeSeat mobile app
-        │ privacy-minimized cloud sync   ← added later when the app is final
+        │ privacy-minimized cloud sync
         ▼
 Firebase Auth + Firestore
         │
@@ -38,7 +41,7 @@ Firebase Auth + Firestore
 SafeSeat Admin Web App
 ```
 
-The Admin Web App can be developed and tested now using synthetic Firebase records. The unfinished Mobile App does not need to be modified yet.
+The paired mobile build now performs this privacy-minimized cloud sync. Synthetic Firebase records are optional and should be cleared before real integration testing.
 
 ## First-time Firebase setup
 
@@ -77,7 +80,7 @@ The password is never written into source code or printed by the setup script.
 
 ### 4. Optional: populate Firebase with safe test records
 
-This allows the Admin dashboard to be tested before Mobile App cloud sync is finished:
+This remains available for isolated Admin UI testing:
 
 ```powershell
 npm run seed-firebase-demo -- --admin-email "YOUR_EMAIL"

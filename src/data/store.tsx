@@ -16,7 +16,7 @@ type Action =
 
 type SyncStatus = 'demo' | 'connecting' | 'live' | 'error';
 
-const STORAGE_KEY = 'safeseat-admin-state-v1.4';
+const STORAGE_KEY = 'safeseat-admin-state-v1.5';
 const RETIRED_STORAGE_KEYS = ['safeseat-admin-state-v1.3', 'safeseat-admin-state-v1.2', 'safeseat-admin-state-v1.1', 'safeseat-admin-state-v1'];
 
 const emptyState: SafeSeatState = {

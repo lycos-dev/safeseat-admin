@@ -75,6 +75,7 @@ Suggested fields:
 
 ```json
 {
+  "ownerUid": "signed-in-driver-uid",
   "plate": "ABC 1234",
   "label": "Fleet Unit 01",
   "driverId": "firebase-uid-or-null",
@@ -104,6 +105,24 @@ Registered occupant:
 }
 ```
 
+Saved dependent/person profile:
+
+```json
+{
+  "ownerUid": "signed-in-user-uid",
+  "vehicleId": "SS-V01",
+  "seat": "Front Passenger",
+  "occupantType": "profile",
+  "profileOwnerUid": "signed-in-user-uid",
+  "profileId": "profile-doc-id",
+  "profileDisplayName": "Passenger Name",
+  "fusionState": "NORMAL",
+  "cameraState": "Standby",
+  "active": true,
+  "lastUpdate": "server timestamp"
+}
+```
+
 Guest occupant:
 
 ```json
@@ -121,7 +140,7 @@ Guest occupant:
 }
 ```
 
-A guest does not require an `account_directory` or Firebase Auth record.
+A saved profile is not falsely treated as a separate Firebase login account, and a guest does not require an `account_directory` or Firebase Auth record.
 
 ### `incidents/{incidentId}`
 Privacy-minimized incident metadata and derived verification outcome.

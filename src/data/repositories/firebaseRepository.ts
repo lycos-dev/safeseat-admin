@@ -71,6 +71,14 @@ function mapOccupant(raw: DocumentData): OccupantReference {
   if (type === 'registered' && safeString(raw.occupantUserId)) {
     return { kind: 'registered', accountId: safeString(raw.occupantUserId) };
   }
+  if (type === 'profile' && safeString(raw.profileId)) {
+    return {
+      kind: 'profile',
+      ownerUid: safeString(raw.profileOwnerUid),
+      profileId: safeString(raw.profileId),
+      displayName: safeString(raw.profileDisplayName || raw.occupantDisplayName, 'Saved profile')
+    };
+  }
   if (type === 'guest') {
     return {
       kind: 'guest',
@@ -166,6 +174,14 @@ export function subscribeSafeSeatState(adminUid: string, onState: (state: SafeSe
     const vehicles: Vehicle[] = current.vehicles.map(({ id, data }) => {
       const session = current.sessions.find(s => s.vehicleId === id);
       const hardware = current.hardware.find(h => h.vehicleId === id);
+      const hardwareFresh = hardware ? Date.now() - new Date(hardware.lastSeen).getTime() <= 30_000 : false;
+      const effectiveModules = hardware
+        ? (hardwareFresh ? hardware.modules : hardware.modules.map(module => ({
+            ...module,
+            status: 'offline' as ModuleStatus,
+            detail: 'No recent SafeSeat mobile heartbeat is available for this module.'
+          })))
+        : defaultModules(id);
       const state: MonitoringState = session?.state || (['NORMAL','SUSPECTED','VERIFYING','EMERGENCY','CLEARED'].includes(data.state) ? data.state : 'NORMAL');
       const camera: Vehicle['camera'] = session?.camera || (data.camera === 'Verifying' || data.camera === 'Unavailable' ? data.camera : 'Standby');
       return {
@@ -176,11 +192,11 @@ export function subscribeSafeSeatState(adminUid: string, onState: (state: SafeSe
         monitoredSeat: session?.seat || safeString(data.monitoredSeat, 'Front Passenger'),
         occupant: session?.occupant || null,
         hubId: safeString(data.hubId || data.mainHubId),
-        connection: hardware?.connection || (data.connection === 'online' || data.online === true ? 'online' : 'offline'),
+        connection: hardware && hardwareFresh ? hardware.connection : 'offline',
         state,
         camera,
-        lastUpdate: session?.lastUpdate || iso(data.lastUpdate || data.updatedAt),
-        modules: hardware?.modules || defaultModules(id)
+        lastUpdate: session?.lastUpdate || hardware?.lastSeen || iso(data.lastUpdate || data.updatedAt),
+        modules: effectiveModules
       };
     });
     onState({ accounts: [...accountsMap.values()], vehicles, incidents: current.incidents, settings: current.settings, lastDiagnosticAt: current.lastDiagnosticAt });
@@ -232,7 +248,11 @@ export function subscribeSafeSeatState(adminUid: string, onState: (state: SafeSe
     emit();
   }, err));
 
-  return () => unsubs.forEach(unsub => unsub());
+  const freshnessTimer = window.setInterval(emit, 15_000);
+  return () => {
+    window.clearInterval(freshnessTimer);
+    unsubs.forEach(unsub => unsub());
+  };
 }
 
 export async function addAccount(account: Account) {
@@ -255,6 +275,7 @@ export async function toggleAccount(accountId: string, nextStatus: Account['stat
 
 export async function addVehicle(vehicle: Vehicle) {
   await setDoc(doc(db, runtimeConfig.collections.vehicles, vehicle.id), {
+    ownerUid: vehicle.driverId,
     plate: vehicle.plate,
     label: vehicle.label,
     driverId: vehicle.driverId,
