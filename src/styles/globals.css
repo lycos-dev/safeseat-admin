@@ -1046,8 +1046,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   }
 }
 
-/* Specificity cleanup for V1.2 integration badge and switch travel. */
-.toggle--on .toggle__knob { transform: translateX(22px); }
+/* Specificity cleanup for V1.2 integration badge. */
 .integration-card > .status-badge {
   display: inline-flex;
   color: #53665c;
@@ -1057,4 +1056,110 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   letter-spacing: .045em;
   background: #eef3f0;
   border-color: #dfe7e3;
+}
+
+/* =========================================================
+   SafeSeat Admin V1.4 — canonical controls
+   Keep this block last so legacy polish sections cannot alter
+   switch geometry or primary-control sizing.
+   ========================================================= */
+.settings-panel .setting-row {
+  grid-template-columns: minmax(0, 1fr) 56px;
+  align-items: center;
+  gap: 24px;
+}
+
+.setting-row__control {
+  width: 56px;
+  min-width: 56px;
+  height: 32px;
+  display: grid;
+  place-items: center end;
+}
+
+.toggle,
+.toggle:hover,
+.toggle--on:hover {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  min-width: 46px;
+  height: 26px;
+  min-height: 26px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+  vertical-align: middle;
+}
+
+.toggle__track {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  border: 1px solid #c4cfca;
+  border-radius: 999px;
+  background: #dbe2de;
+  box-shadow: inset 0 1px 2px rgba(15, 53, 37, .06);
+  transition: background .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.toggle__knob,
+.toggle:active .toggle__knob {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 53, 37, .22), 0 0 0 1px rgba(15, 53, 37, .04);
+  transform: translateX(0);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.toggle--on .toggle__track {
+  background: var(--green-600);
+  border-color: var(--green-600);
+}
+
+.toggle--on .toggle__knob,
+.toggle--on:active .toggle__knob {
+  transform: translateX(20px);
+}
+
+.toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(23, 122, 80, .16);
+}
+
+.toggle:focus-visible .toggle__track {
+  border-color: var(--green-600);
+}
+
+/* Consistent green actions across the Admin UI. */
+.button--primary {
+  background: var(--green-700);
+  color: #fff;
+  border: 1px solid var(--green-700);
+  box-shadow: 0 4px 12px rgba(18, 99, 66, .16);
+}
+.button--primary:hover:not(:disabled) {
+  background: var(--green-800);
+  border-color: var(--green-800);
+  box-shadow: 0 5px 14px rgba(18, 99, 66, .19);
+}
+.button--primary:active:not(:disabled) {
+  background: var(--green-900);
+  border-color: var(--green-900);
+}
+
+@media (max-width: 760px) {
+  .settings-panel .setting-row { grid-template-columns: minmax(0, 1fr) 52px; gap: 14px; }
+  .setting-row__control { width: 52px; min-width: 52px; }
 }

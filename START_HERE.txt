@@ -1,0 +1,32 @@
+SAFESEAT ADMIN V1.4 — FIRST RUN
+================================
+
+This ZIP is already configured for the shared SafeSeat Firebase project and starts in Firebase mode.
+The Mobile App does NOT need to be finalized yet.
+
+1) Open PowerShell in this folder.
+
+2) Install packages:
+   npm install
+
+3) Firebase Console > Project Settings > Service Accounts > Generate new private key.
+   Save the downloaded JSON in this folder as:
+   service-account.json
+
+   IMPORTANT: Keep this file private. Do not send or commit it.
+
+4) Create/update YOUR real Admin login:
+   npm run setup-admin -- --email "YOUR_EMAIL" --password "YOUR_STRONG_PASSWORD" --name "SafeSeat Administrator"
+
+5) While the Mobile App is unfinished, create safe Firebase test data:
+   npm run seed-firebase-demo -- --admin-email "YOUR_EMAIL"
+
+6) Start the Admin Web App:
+   npm run dev
+
+7) Sign in using the email/password from step 4.
+
+When real Mobile App cloud synchronization is ready, remove the synthetic Firebase records:
+   npm run clear-firebase-demo
+
+For details, read docs/FIREBASE_SETUP.md.

@@ -1,27 +1,25 @@
-# SafeSeat Safety Control Center — Admin Web App V1.3
+# SafeSeat Safety Control Center — Admin Web App V1.4
 
-Privacy-minimized SafeSeat Admin Module with two runtime data providers:
+Privacy-minimized SafeSeat Admin Module with two runtime providers:
 
-- **Demo mode** — deterministic local records for manuscript screenshots and UI review.
-- **Firebase mode** — Firebase Authentication + Firestore using the same SafeSeat project as the mobile app.
+- **Firebase mode** — Firebase Authentication + Firestore using the same `safeseat-app` Firebase project.
+- **Demo mode** — deterministic local records for screenshots/UI review.
 
-## V1.3 backend integration
+The included `.env` is already configured for the shared SafeSeat Firebase Web project and starts in `firebase` mode. No administrator password or Firebase service-account private key is included in this ZIP.
 
-- Added Firebase Authentication for production-mode admin sign-in.
-- Added authorization through `admin_accounts/{uid}`; being a normal SafeSeat user is not enough to enter the Admin Module.
-- Added realtime Firestore subscriptions for account directory, vehicles, active monitoring sessions, incidents, hardware status, and per-admin settings.
-- Added Firebase writes for vehicle registration, account-directory status management, incident resolution, dashboard preferences, and privacy-limited diagnostic requests.
-- Kept demo mode fully isolated for deterministic paper screenshots.
-- Added Firestore rules/indexes and Firebase Hosting configuration.
-- Added a documented Main Hub/mobile/cloud boundary so the Admin site does not become a second safety controller.
-- Preserved Guest occupants as session-only identities.
-- Preserved the fixed privacy contract: exact HR, RR, temperature, FSR, MPU, and camera-frame data are not part of the Admin schema.
+## V1.4 changes
 
-## Important account privacy design
+- Firebase mode prepared as the default runtime for the Admin Web App.
+- Removed hard-coded Firebase admin credentials from the provisioning script.
+- Added secure CLI-based admin provisioning with Firebase Admin SDK.
+- Added a Firebase synthetic-data seeder so the Admin can be fully tested before the Mobile App is finalized.
+- Added a matching cleanup command for synthetic Firebase records.
+- Preserved `admin_accounts/{uid}` as the protected authorization gate in addition to Firebase Authentication.
+- Preserved realtime Firestore subscriptions and privacy-minimized writes for vehicles, incidents, settings, account-directory records, and diagnostic requests.
+- Fixed Settings switch geometry so the white knob stays centered inside the track in both states.
+- Normalized primary green button states.
 
-The Admin Module uses a separate `account_directory` collection instead of querying private mobile profile documents directly. Firestore queries return whole documents, so using a minimized directory avoids downloading unrelated profile fields just to display an account name/role/consent state.
-
-## Runtime architecture
+## Important architecture boundary
 
 ```text
 Sensor nodes / Camera
@@ -32,7 +30,7 @@ SafeSeat Main Hub
         │ local SafeSeat API
         ▼
 SafeSeat mobile app
-        │ privacy-minimized cloud sync
+        │ privacy-minimized cloud sync   ← added later when the app is final
         ▼
 Firebase Auth + Firestore
         │
@@ -40,55 +38,95 @@ Firebase Auth + Firestore
 SafeSeat Admin Web App
 ```
 
-The Admin Web App is not connected directly to each vehicle's ESP32 and does not make emergency decisions.
+The Admin Web App can be developed and tested now using synthetic Firebase records. The unfinished Mobile App does not need to be modified yet.
 
-## Run in demo mode
+## First-time Firebase setup
+
+### 1. Install
 
 ```powershell
-Copy-Item .env.example .env
 npm install
+```
+
+### 2. Download a Firebase service account
+
+Firebase Console → Project Settings → Service Accounts → **Generate new private key**.
+
+Save it in the project root as:
+
+```text
+service-account.json
+```
+
+It is excluded by `.gitignore`. Never commit or send that private key.
+
+### 3. Create/update your real SafeSeat Admin login
+
+```powershell
+npm run setup-admin -- --email "YOUR_EMAIL" --password "YOUR_STRONG_PASSWORD" --name "SafeSeat Administrator"
+```
+
+This creates/updates both:
+
+```text
+Firebase Authentication user
+admin_accounts/<same UID>
+```
+
+The password is never written into source code or printed by the setup script.
+
+### 4. Optional: populate Firebase with safe test records
+
+This allows the Admin dashboard to be tested before Mobile App cloud sync is finished:
+
+```powershell
+npm run seed-firebase-demo -- --admin-email "YOUR_EMAIL"
+```
+
+Remove those synthetic records later with:
+
+```powershell
+npm run clear-firebase-demo
+```
+
+### 5. Run
+
+```powershell
 npm run dev
 ```
 
-Keep:
+Sign in using the email/password you supplied to `setup-admin`.
+
+See `docs/FIREBASE_SETUP.md` for deployment/rules details.
+
+## Firestore collections
+
+```text
+admin_accounts
+account_directory
+vehicles
+monitoring_sessions
+incidents
+hardware_status
+admin_settings
+diagnostic_requests
+```
+
+## Privacy contract
+
+The Admin Module must not display or persist exact physiological readings, raw sensor arrays, or camera media. Admin-facing records contain only operational/derived states needed for administration and incident handling.
+
+Excluded examples include exact HR, RR, MLX temperature, FSR values, MPU samples, camera frames, images, and video.
+
+## Demo mode
+
+To temporarily use the local deterministic UI dataset, change:
 
 ```env
 VITE_DATA_MODE=demo
 ```
 
-Default demo credentials are defined in `.env.example` and are not used in Firebase mode.
-
-## Run with Firebase
-
-1. Copy the matching Firebase Web configuration from the existing `safeseat-app` environment into `.env`.
-2. Set:
-
-```env
-VITE_DATA_MODE=firebase
-```
-
-3. Create an authorized Firebase Auth user and matching `admin_accounts/<UID>` document.
-4. Start the app:
-
-```powershell
-npm install
-npm run dev
-```
-
-See `docs/FIREBASE_SETUP.md` for the exact setup sequence.
-
-## Firebase files
-
-```text
-firebase.json
-firestore.rules
-firestore.indexes.json
-docs/FIREBASE_SETUP.md
-docs/SAFESEAT_CLOUD_CONTRACT.md
-docs/MOBILE_CLOUD_SYNC_CONTRACT.md
-```
-
-If your existing SafeSeat Firebase project already has Firestore rules, **merge** the Admin collection rules into the project's rule file instead of replacing existing mobile-app rules.
+Demo credentials in `.env` are ignored in Firebase mode.
 
 ## Build checks
 
@@ -96,17 +134,3 @@ If your existing SafeSeat Firebase project already has Firestore rules, **merge*
 npm run typecheck
 npm run build
 ```
-
-## Current hardware represented
-
-- SafeSeat Main Hub
-- C1001 mmWave radar — front-facing, approximately 0.8–1.0 m from the monitored occupant
-- MLX90614 — headrest
-- Backrest FSR array ×6
-- Cushion FSR array ×3
-- MPU6050 — seat-frame road/vibration context
-- ESP32-S3 camera — event-based posture verification only
-
-## Privacy contract
-
-The Admin Module does not display or persist exact physiological readings, raw sensor arrays, or camera media. Admin-facing records contain only operational/derived states necessary for fleet management and incident handling.

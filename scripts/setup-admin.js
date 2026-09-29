@@ -1,70 +1,67 @@
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { FieldValue } from 'firebase-admin/firestore';
+import { initializeAdminSdk, readArg, requireValue } from './firebase-admin-common.js';
 
-const SERVICE_ACCOUNT_PATH = resolve(process.cwd(), 'service-account.json');
+const email = requireValue(readArg('email') || process.env.SAFESEAT_ADMIN_EMAIL, '--email or SAFESEAT_ADMIN_EMAIL').trim().toLowerCase();
+const password = requireValue(readArg('password') || process.env.SAFESEAT_ADMIN_PASSWORD, '--password or SAFESEAT_ADMIN_PASSWORD');
+const name = (readArg('name') || process.env.SAFESEAT_ADMIN_NAME || 'SafeSeat Administrator').trim();
 
-const ADMIN_EMAIL = 'admin@gmail.com';
-const ADMIN_PASSWORD = 'admin789';
-const ADMIN_NAME = 'SafeSeat Administrator';
+if (!email.includes('@')) {
+  console.error('ERROR: Admin email is not valid.');
+  process.exit(1);
+}
+if (password.length < 8) {
+  console.error('ERROR: Use an admin password with at least 8 characters.');
+  process.exit(1);
+}
 
 async function main() {
-  let serviceAccount;
-  try {
-    serviceAccount = JSON.parse(readFileSync(SERVICE_ACCOUNT_PATH, 'utf-8'));
-  } catch {
-    console.error('ERROR: service-account.json not found in project root.');
-    console.error('Download it from Firebase Console > Project Settings > Service Accounts > Generate New Private Key');
-    process.exit(1);
-  }
-
-  if (getApps().length === 0) {
-    initializeApp({ credential: cert(serviceAccount) });
-  }
-
+  const { db } = initializeAdminSdk();
   const auth = getAuth();
-  const db = getFirestore();
 
   let userRecord;
   try {
-    userRecord = await auth.createUser({
-      email: ADMIN_EMAIL,
-      password: ADMIN_PASSWORD,
-      displayName: ADMIN_NAME,
-      emailVerified: true,
+    userRecord = await auth.getUserByEmail(email);
+    userRecord = await auth.updateUser(userRecord.uid, {
+      password,
+      displayName: name,
+      disabled: false,
+      emailVerified: true
     });
-    console.log(`Created Firebase Auth user: ${userRecord.uid} (${ADMIN_EMAIL})`);
-  } catch (err) {
-    if (err.code === 'auth/email-already-exists') {
-      userRecord = await auth.getUserByEmail(ADMIN_EMAIL);
-      console.log(`User already exists. Using existing UID: ${userRecord.uid}`);
-    } else {
-      throw err;
-    }
+    console.log(`Updated existing Firebase Authentication user: ${email}`);
+  } catch (error) {
+    if (error?.code !== 'auth/user-not-found') throw error;
+    userRecord = await auth.createUser({
+      email,
+      password,
+      displayName: name,
+      disabled: false,
+      emailVerified: true
+    });
+    console.log(`Created Firebase Authentication user: ${email}`);
   }
 
-  const uid = userRecord.uid;
-  const adminDoc = {
-    name: ADMIN_NAME,
-    email: ADMIN_EMAIL,
+  await db.collection('admin_accounts').doc(userRecord.uid).set({
+    name,
+    email,
     role: 'Fleet Admin',
     status: 'ACTIVE',
     enabled: true,
-  };
+    updatedAt: FieldValue.serverTimestamp()
+  }, { merge: true });
 
-  await db.collection('admin_accounts').doc(uid).set(adminDoc);
-  console.log(`Created admin_accounts document for UID: ${uid}`);
-  console.log('\nAdmin account ready:');
-  console.log(`  Email:    ${ADMIN_EMAIL}`);
-  console.log(`  Password: ${ADMIN_PASSWORD}`);
-  console.log(`  UID:      ${uid}`);
-  console.log(`  Role:     Fleet Admin`);
-  console.log(`  Status:   ACTIVE`);
+  console.log('Created/updated the protected admin authorization record.');
+  console.log('');
+  console.log('SafeSeat Admin account is ready.');
+  console.log(`  Email: ${email}`);
+  console.log(`  UID:   ${userRecord.uid}`);
+  console.log('  Role:  Fleet Admin');
+  console.log('  Status: ACTIVE');
+  console.log('');
+  console.log('The password is intentionally not printed. Use the password supplied to this command.');
 }
 
-main().catch(err => {
-  console.error('Setup failed:', err.message);
+main().catch(error => {
+  console.error('Admin setup failed:', error instanceof Error ? error.message : error);
   process.exit(1);
 });

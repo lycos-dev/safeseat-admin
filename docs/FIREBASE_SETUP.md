@@ -1,77 +1,139 @@
-# Firebase Setup — SafeSeat Admin V1.3
+# Firebase Setup — SafeSeat Admin V1.4
 
-## 1. Use the existing SafeSeat Firebase project
+## Shared Firebase project
 
-Do not create a second Firebase project. Copy the matching Firebase Web configuration values from the existing `safeseat-app` environment into `safeseat-admin/.env` using `.env.example`.
+The Admin uses the existing `safeseat-app` Firebase project. Do not create a second Firebase project for the Admin Module.
 
-Set:
+The supplied `.env` and `.env.example` already contain the Firebase Web configuration and the privacy-minimized Admin collection names. Firebase Web configuration is client configuration; the Firebase **service-account private key is not included** and must remain private.
 
-```env
-VITE_DATA_MODE=firebase
-```
-
-## 2. Install dependencies
+## 1. Install dependencies
 
 ```powershell
 npm install
 ```
 
-## 3. Create an administrator identity
+## 2. Obtain a service-account key for one-time administration
 
-In Firebase Authentication, create or choose the admin's email/password account. Copy its UID.
+Firebase Console → Project Settings → Service Accounts → Generate new private key.
 
-Then create:
+Save it as:
 
 ```text
-admin_accounts/<AUTH_UID>
+service-account.json
 ```
 
-with at least:
+The file is ignored by Git. Do not commit, upload, or share it.
 
-```json
-{
-  "name": "SafeSeat Administrator",
-  "email": "your-admin-email@example.com",
-  "role": "Fleet Admin",
-  "status": "ACTIVE",
-  "enabled": true
-}
+You may use another path with:
+
+```powershell
+npm run setup-admin -- --service-account "C:\path\service-account.json" --email "..." --password "..."
 ```
 
-The web app refuses Firebase login when the authenticated UID does not have an active admin document.
+## 3. Provision the SafeSeat administrator
 
-## 4. Firestore rules
+```powershell
+npm run setup-admin -- --email "YOUR_EMAIL" --password "YOUR_STRONG_PASSWORD" --name "SafeSeat Administrator"
+```
 
-`firestore.rules` in this repository covers the new Admin collections only and intentionally does not grant the Admin Module access to private mobile profile documents.
+The command creates or updates:
 
-If the Firebase project already has a larger rule file, merge these collection blocks into it instead of blindly replacing the existing rules.
+```text
+Firebase Authentication
+└── <admin email/password user>
 
-Deploy after reviewing:
+Firestore
+└── admin_accounts/<AUTH_UID>
+    ├── name
+    ├── email
+    ├── role: "Fleet Admin"
+    ├── status: "ACTIVE"
+    └── enabled: true
+```
+
+A normal Firebase Auth user cannot enter the Admin Module without the active `admin_accounts/<UID>` authorization record.
+
+The provisioning script contains no built-in admin email or password.
+
+## 4. Deploy/merge Firestore rules
+
+The repository's `firestore.rules` includes both the SafeSeat mobile-user namespace and the privacy-minimized Admin collections.
+
+If your live Firebase project already has newer mobile-app rules, merge the Admin collection blocks rather than blindly replacing a newer ruleset.
+
+Then deploy:
 
 ```powershell
 firebase deploy --only firestore:rules,firestore:indexes
 ```
 
-## 5. Account directory
+## 5. Seed Firebase while the Mobile App is unfinished
 
-Do not point the Admin Module directly at private user/profile documents if they include height, weight, phone number, or other data unnecessary to fleet administration.
+The Admin can be tested independently with synthetic records:
 
-Populate `account_directory` with only the minimal fields required by the Admin Module. The mobile app or a trusted backend can mirror/update this safe directory when a user registers or changes consent.
+```powershell
+npm run seed-firebase-demo -- --admin-email "YOUR_EMAIL"
+```
 
-## 6. Run
+This creates clearly named test records such as:
+
+```text
+account_directory/TEST-DRIVER-001
+account_directory/TEST-OCCUPANT-001
+vehicles/SS-TEST-01
+monitoring_sessions/TEST-SESSION-001
+hardware_status/SS-TEST-01
+incidents/TEST-INCIDENT-001
+incidents/TEST-INCIDENT-002
+```
+
+They contain only derived/privacy-minimized Admin fields. They are not substitutes for final Mobile App synchronization.
+
+Remove them with:
+
+```powershell
+npm run clear-firebase-demo
+```
+
+The cleanup intentionally does not delete the real admin account.
+
+## 6. Run Firebase mode
+
+`.env` is already set to:
+
+```env
+VITE_DATA_MODE=firebase
+```
+
+Start:
 
 ```powershell
 npm run dev
 ```
 
-The top bar should show `Firebase live` once authenticated and Firestore subscriptions are active.
+Sign in with the credentials supplied to `setup-admin`.
 
-## Demo screenshots
+## 7. Expected behavior before Mobile sync is finalized
 
-For deterministic manuscript screenshots, switch back to:
+With no seed data, successful Firebase login can legitimately show an empty fleet/account/incident dataset.
 
-```env
-VITE_DATA_MODE=demo
-```
+With the synthetic seed installed, the Firebase-backed UI can be tested for:
 
-The demo provider remains isolated from Firebase and does not represent real fleet records.
+- login/logout and admin authorization;
+- realtime account directory;
+- vehicle list/detail;
+- hardware-health UI;
+- active monitoring state display;
+- incident history and resolution;
+- dashboard preferences;
+- diagnostic-request creation.
+
+Actual Main Hub/Mobile-generated records remain a later integration step.
+
+## Security notes
+
+- Never put a Firebase service-account JSON key in `.env`, browser code, Git, or deployment assets.
+- The browser uses only Firebase Web configuration.
+- `admin_accounts` authorizes Admin access; it is not the mobile user directory.
+- `account_directory` contains only fields necessary for administration.
+- Exact HR, RR, temperature, FSR, MPU, camera frames, and raw telemetry are excluded from the Admin contract.

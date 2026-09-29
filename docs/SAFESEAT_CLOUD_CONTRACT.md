@@ -109,7 +109,6 @@ Guest occupant:
 ```json
 {
   "ownerUid": "signed-in-user-uid",
-  "ownerUid": "signed-in-user-uid",
   "vehicleId": "SS-V01",
   "seat": "Front Passenger",
   "occupantType": "guest",
