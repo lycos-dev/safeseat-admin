@@ -520,7 +520,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .table-primary strong, .account-cell strong, .stacked-cell strong { font-size: 11.5px; }
 .table-primary span:not(.connection-dot), .account-cell span, .stacked-cell span { font-size: 10px; }
 
-/* Occupant presentation supports registered accounts, saved profiles, and guest sessions. */
+/* Occupant presentation explicitly supports registered and guest sessions. */
 .occupant-label {
   min-width: 0;
   display: inline-grid;
@@ -574,11 +574,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   text-transform: uppercase;
   letter-spacing: .045em;
   white-space: nowrap;
-}
-.guest-badge--profile {
-  background: var(--green-50);
-  color: var(--green-700);
-  border-color: var(--green-100);
 }
 .occupant-label--compact {
   grid-template-columns: 24px minmax(0, 1fr) auto;
@@ -1051,7 +1046,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   }
 }
 
-/* Specificity cleanup for V1.2 integration badge. */
+/* Specificity cleanup for V1.2 integration badge and switch travel. */
+.toggle--on .toggle__knob { transform: translateX(22px); }
 .integration-card > .status-badge {
   display: inline-flex;
   color: #53665c;
@@ -1064,33 +1060,196 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 
 /* =========================================================
-   SafeSeat Admin V1.5 — canonical controls
-   Keep this block last so legacy polish sections cannot alter
-   switch geometry or primary-control sizing.
+   SafeSeat Admin — Settings redesign
    ========================================================= */
-.settings-panel .setting-row {
-  grid-template-columns: minmax(0, 1fr) 56px;
-  align-items: center;
-  gap: 24px;
+.settings-layout--redesign {
+  gap: 20px;
 }
 
-.setting-row__control {
-  width: 56px;
-  min-width: 56px;
-  height: 32px;
-  display: grid;
-  place-items: center end;
-}
-
-.toggle,
-.toggle:hover,
-.toggle--on:hover {
+.settings-layout--redesign .settings-panel {
   position: relative;
-  display: inline-block;
-  width: 46px;
-  min-width: 46px;
-  height: 26px;
-  min-height: 26px;
+  padding: 24px;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.settings-layout--redesign .settings-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(23, 122, 80, .23), transparent);
+}
+
+.settings-layout--redesign .settings-panel .section-heading {
+  margin-bottom: 20px;
+}
+
+.settings-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.settings-section-head .section-heading {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.settings-count-pill {
+  flex: 0 0 auto;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 11px;
+  margin-top: 2px;
+  border: 1px solid #dce6e1;
+  border-radius: 999px;
+  background: #f7faf8;
+  color: #64746c;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+/* Preference cards */
+.preferences-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.preference-card {
+  min-width: 0;
+  min-height: 176px;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border: 1px solid #e1e8e4;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff, #fbfcfb);
+  box-shadow: 0 2px 7px rgba(15, 53, 37, .025);
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease;
+}
+
+.preference-card:hover {
+  border-color: #ccd9d2;
+  box-shadow: 0 8px 20px rgba(15, 53, 37, .055);
+  transform: translateY(-1px);
+}
+
+.preference-card--enabled {
+  border-color: #cde3d7;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fcfa 100%);
+}
+
+.preference-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.preference-card__icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid #dfe8e3;
+  border-radius: 11px;
+  background: #f5f8f6;
+  color: #65756d;
+  transition: color .18s ease, background .18s ease, border-color .18s ease;
+}
+
+.preference-card__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.preference-card--enabled .preference-card__icon {
+  border-color: #d3e8dd;
+  background: var(--green-50);
+  color: var(--green-700);
+}
+
+.preference-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 25px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: #f0f3f1;
+  color: #738078;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.preference-card__status[data-enabled='true'] {
+  background: #eaf7f0;
+  color: var(--green-700);
+}
+
+.preference-card__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #9ca9a2;
+}
+
+.preference-card__status[data-enabled='true'] .preference-card__status-dot {
+  background: var(--green-500);
+  box-shadow: 0 0 0 3px rgba(32, 148, 98, .09);
+}
+
+.preference-card__copy {
+  min-width: 0;
+  margin-top: 13px;
+}
+
+.preference-card__copy strong {
+  display: block;
+  color: var(--slate-950);
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.preference-card__copy span {
+  display: block;
+  margin-top: 5px;
+  color: var(--slate-500);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.preference-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 14px;
+}
+
+.preference-card__footer > span {
+  color: #89958f;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+/* Modern SafeSeat switch */
+.toggle.toggle--modern {
+  position: relative;
+  width: 54px;
+  height: 30px;
+  min-width: 54px;
+  min-height: 30px;
   margin: 0;
   padding: 0;
   border: 0;
@@ -1098,73 +1257,272 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   background: transparent;
   box-shadow: none;
   overflow: visible;
-  vertical-align: middle;
+  flex: 0 0 auto;
 }
 
-.toggle__track {
+.toggle.toggle--modern:hover,
+.toggle.toggle--modern.toggle--on:hover {
+  background: transparent;
+}
+
+.toggle.toggle--modern .toggle__track {
   position: absolute;
   inset: 0;
   display: block;
-  overflow: hidden;
-  border: 1px solid #c4cfca;
-  border-radius: 999px;
-  background: #dbe2de;
-  box-shadow: inset 0 1px 2px rgba(15, 53, 37, .06);
+  border: 1px solid #cbd5d0;
+  border-radius: inherit;
+  background: #dce2df;
+  box-shadow: inset 0 1px 2px rgba(15, 53, 37, .07);
   transition: background .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
 
-.toggle__knob,
-.toggle:active .toggle__knob {
+.toggle.toggle--modern:hover .toggle__track {
+  border-color: #b8c5be;
+  background: #d4dcd8;
+}
+
+.toggle.toggle--modern .toggle__knob {
   position: absolute;
-  top: 4px;
-  left: 4px;
-  width: 18px;
-  height: 18px;
+  z-index: 2;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
   margin: 0;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 1px 3px rgba(15, 53, 37, .22), 0 0 0 1px rgba(15, 53, 37, .04);
+  box-shadow: 0 2px 5px rgba(15, 53, 37, .22), 0 0 0 1px rgba(15, 53, 37, .035);
   transform: translateX(0);
-  transition: transform .18s ease, box-shadow .18s ease;
+  transition: transform .2s cubic-bezier(.2, .8, .2, 1), box-shadow .18s ease;
 }
 
-.toggle--on .toggle__track {
-  background: var(--green-600);
+.toggle.toggle--modern .toggle__state {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  transform: translateY(-50%);
+  font-size: 6.5px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: .04em;
+  pointer-events: none;
+  transition: opacity .16s ease;
+}
+
+.toggle.toggle--modern .toggle__state--off {
+  right: 7px;
+  color: #78867f;
+  opacity: 1;
+}
+
+.toggle.toggle--modern .toggle__state--on {
+  left: 8px;
+  color: rgba(255, 255, 255, .95);
+  opacity: 0;
+}
+
+.toggle.toggle--modern.toggle--on .toggle__track {
   border-color: var(--green-600);
+  background: linear-gradient(135deg, var(--green-600), var(--green-700));
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, .09), 0 3px 8px rgba(23, 122, 80, .14);
 }
 
-.toggle--on .toggle__knob,
-.toggle--on:active .toggle__knob {
-  transform: translateX(20px);
+.toggle.toggle--modern.toggle--on:hover .toggle__track {
+  border-color: var(--green-700);
+  background: linear-gradient(135deg, var(--green-700), var(--green-800));
 }
 
-.toggle:focus-visible {
+.toggle.toggle--modern.toggle--on .toggle__knob {
+  transform: translateX(24px);
+}
+
+.toggle.toggle--modern.toggle--on .toggle__state--off { opacity: 0; }
+.toggle.toggle--modern.toggle--on .toggle__state--on { opacity: 1; }
+
+.toggle.toggle--modern:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(23, 122, 80, .16);
+  box-shadow: 0 0 0 3px rgba(23, 122, 80, .17);
 }
 
-.toggle:focus-visible .toggle__track {
-  border-color: var(--green-600);
+.toggle.toggle--modern:active .toggle__knob {
+  width: 22px;
+  box-shadow: 0 1px 3px rgba(15, 53, 37, .28), 0 0 0 1px rgba(15, 53, 37, .04);
 }
 
-/* Consistent green actions across the Admin UI. */
-.button--primary {
-  background: var(--green-700);
-  color: #fff;
-  border: 1px solid var(--green-700);
-  box-shadow: 0 4px 12px rgba(18, 99, 66, .16);
+/* Data source section */
+.settings-data-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
-.button--primary:hover:not(:disabled) {
-  background: var(--green-800);
-  border-color: var(--green-800);
-  box-shadow: 0 5px 14px rgba(18, 99, 66, .19);
+
+.settings-layout--redesign .settings-data-card {
+  height: 100%;
+  min-height: 148px;
+  margin: 0;
+  padding: 17px;
+  border-radius: 16px;
 }
-.button--primary:active:not(:disabled) {
-  background: var(--green-900);
-  border-color: var(--green-900);
+
+.settings-layout--redesign .integration-card--primary {
+  background: linear-gradient(145deg, #ffffff 20%, #f7fbf9 100%);
+}
+
+.settings-layout--redesign .integration-card--secondary {
+  background: #f8faf9;
+}
+
+.settings-layout--redesign .integration-card__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+
+.settings-layout--redesign .integration-card__icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.settings-sync-error {
+  margin-top: 12px;
+}
+
+.settings-privacy-card,
+.settings-reset-row {
+  margin-top: 12px;
+}
+
+.settings-layout--redesign .settings-privacy-card {
+  padding: 17px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #eff8f4, #f7fbf9);
+}
+
+.settings-layout--redesign .settings-reset-row {
+  padding: 15px 16px;
+  border-radius: 14px;
+  background: #fcfcfc;
+}
+
+/* Safeguards */
+.settings-policy-grid {
+  gap: 10px;
+}
+
+.settings-policy-grid > div {
+  position: relative;
+  display: block;
+  min-height: 132px;
+  padding: 15px;
+  border: 1px solid #e2e9e5;
+  border-radius: 15px;
+  background: linear-gradient(180deg, #fff, #fbfcfb);
+}
+
+.settings-policy-grid > div > svg {
+  display: none;
+}
+
+.settings-policy-grid .policy-grid__icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  margin: 0 0 11px;
+  border: 1px solid #d5e8de;
+  border-radius: 10px;
+  background: var(--green-50);
+  color: var(--green-700);
+}
+
+.settings-policy-grid .policy-grid__icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.settings-policy-grid > div > strong {
+  display: block;
+  color: var(--slate-950);
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.settings-policy-grid > div > span:last-child {
+  display: block;
+  margin-top: 5px;
+  color: var(--slate-500);
+  font-size: 9.75px;
+  line-height: 1.5;
+}
+
+@media (max-width: 980px) {
+  .preferences-grid,
+  .settings-data-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-layout--redesign .settings-data-card {
+    min-height: 0;
+  }
 }
 
 @media (max-width: 760px) {
-  .settings-panel .setting-row { grid-template-columns: minmax(0, 1fr) 52px; gap: 14px; }
-  .setting-row__control { width: 52px; min-width: 52px; }
+  .settings-layout--redesign .settings-panel {
+    padding: 18px;
+    border-radius: 17px;
+  }
+
+  .settings-layout--redesign .settings-panel::before {
+    left: 18px;
+    right: 18px;
+  }
+
+  .settings-section-head {
+    display: block;
+  }
+
+  .settings-count-pill {
+    margin: -6px 0 18px;
+  }
+
+  .preference-card {
+    min-height: 166px;
+  }
+
+  .settings-layout--redesign .integration-card,
+  .settings-layout--redesign .integration-card--secondary {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .settings-layout--redesign .integration-card > .status-badge {
+    grid-column: 2;
+    justify-self: start;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .settings-layout--redesign {
+    gap: 14px;
+  }
+
+  .settings-layout--redesign .settings-panel {
+    padding: 16px;
+  }
+
+  .preference-card {
+    padding: 14px;
+  }
+
+  .preference-card__footer > span {
+    display: none;
+  }
+
+  .preference-card__footer {
+    justify-content: flex-end;
+  }
+
+  .settings-policy-grid {
+    grid-template-columns: 1fr;
+  }
 }
