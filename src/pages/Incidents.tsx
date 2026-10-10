@@ -76,7 +76,7 @@ export function Incidents() {
   };
 
   return (
-    <>
+    <div className="screen screen--incidents">
       <div className="metric-grid metric-grid--three">
         <div className="mini-stat"><div className="mini-stat__icon mini-stat__icon--danger"><AlertTriangle /></div><div><span>Escalated</span><strong>{state.incidents.filter(i => i.status === 'ESCALATED').length}</strong></div></div>
         <div className="mini-stat"><div className="mini-stat__icon"><CheckCircle2 /></div><div><span>Resolved</span><strong>{state.incidents.filter(i => i.status === 'RESOLVED').length}</strong></div></div>
@@ -171,6 +171,6 @@ export function Incidents() {
           </div>
         )}
       </Modal>
-    </>
+    </div>
   );
 }

@@ -26,8 +26,7 @@ export function Dashboard() {
   const degraded = allModules.filter(m => m.status === 'degraded' || m.status === 'offline').length;
   const fleetHealth = allModules.length
     ? Math.round((allModules.filter(m => m.status === 'operational' || m.status === 'standby').length / allModules.length) * 100)
-    : null;
-  const activeVehicles = state.vehicles.filter(v => isOccupied(v.occupant));
+    : 100;
 
   const distribution = useMemo(() => ({
     normal: state.vehicles.filter(v => v.state === 'NORMAL' || v.state === 'CLEARED').length,
@@ -41,7 +40,7 @@ export function Dashboard() {
     .slice(0, 5);
 
   return (
-    <>
+    <div className="screen screen--dashboard">
       {state.settings.criticalNotifications && escalated.length > 0 && (
         <button className="critical-banner" onClick={() => navigate('/incidents')}>
           <div className="critical-banner__icon"><AlertTriangle /></div>
@@ -54,43 +53,42 @@ export function Dashboard() {
         <MetricCard icon={CarFront} label="Registered vehicles" value={state.vehicles.length} detail={`${online} currently online`} />
         <MetricCard icon={Users} label="Live sessions" value={live} detail={guestSessions ? `${guestSessions} guest session${guestSessions > 1 ? 's' : ''} active` : 'Occupied monitored seats'} tone="gold" />
         <MetricCard icon={AlertTriangle} label="Escalated incidents" value={escalated.length} detail="Administrator attention required" tone={escalated.length ? 'red' : 'green'} />
-        <MetricCard icon={Activity} label="Fleet hardware health" value={fleetHealth === null ? '—' : `${fleetHealth}%`} detail={fleetHealth === null ? 'No hardware status received yet' : `${degraded} degraded/offline module states`} tone={degraded ? 'gold' : 'green'} />
+        <MetricCard icon={Activity} label="Fleet hardware health" value={`${fleetHealth}%`} detail={`${degraded} degraded/offline module states`} tone={degraded ? 'gold' : 'green'} />
       </div>
 
-      <div className="dashboard-grid dashboard-grid--wide">
-        <section className="panel panel--span-2">
-          <SectionHeading eyebrow="LIVE MONITOR" title="Active SafeSeat sessions" description="Administrative status only: vehicle, monitored seat, occupant session, fusion state, and event-based camera state. Exact physiological readings are intentionally excluded." action={<button className="text-button" onClick={() => navigate('/fleet')}>Manage fleet <ArrowRight size={16} /></button>} />
-          <div className="table-wrap">
-            <table className="data-table data-table--sessions">
-              <thead><tr><th>Vehicle</th><th>Monitored seat</th><th>Occupant</th><th>Fusion state</th><th>Camera</th><th>Updated</th></tr></thead>
-              <tbody>
-                {activeVehicles.map(vehicle => (
-                  <tr key={vehicle.id} className="clickable-row" onClick={() => setSelected(vehicle)}>
-                    <td><div className="table-primary"><span className={`connection-dot connection-dot--${vehicle.connection}`} /><div><strong>{vehicle.id}</strong><span>{vehicle.plate}</span></div></div></td>
-                    <td>{vehicle.monitoredSeat}</td>
-                    <td><OccupantLabel occupant={vehicle.occupant} /></td>
-                    <td><StatusBadge status={vehicle.state} /></td>
-                    <td><span className={`camera-state camera-state--${vehicle.camera.toLowerCase()}`}><Camera size={14} />{vehicle.camera}</span></td>
-                    <td className="muted">{fmtTime(vehicle.lastUpdate)}</td>
-                  </tr>
-                ))}
-                {activeVehicles.length === 0 && (
-                  <tr><td colSpan={6}><div className="empty-state"><strong>No active monitoring session</strong><p>Start monitoring from the SafeSeat mobile app to populate this live view.</p></div></td></tr>
-                )}
-              </tbody>
-            </table>
+      <section className="panel dashboard-live-panel">
+        <SectionHeading eyebrow="LIVE MONITOR" title="Active SafeSeat sessions" description="Administrative status only: vehicle, monitored seat, occupant session, fusion state, and event-based camera state. Exact physiological readings are intentionally excluded." action={<button className="text-button" onClick={() => navigate('/fleet')}>Manage fleet <ArrowRight size={16} /></button>} />
+        <div className="dashboard-live-grid">
+          <div className="dashboard-live-main">
+            <div className="table-wrap">
+              <table className="data-table data-table--sessions">
+                <thead><tr><th>Vehicle</th><th>Monitored seat</th><th>Occupant</th><th>Fusion state</th><th>Camera</th><th>Updated</th></tr></thead>
+                <tbody>
+                  {state.vehicles.map(vehicle => (
+                    <tr key={vehicle.id} className="clickable-row" onClick={() => setSelected(vehicle)}>
+                      <td><div className="table-primary"><span className={`connection-dot connection-dot--${vehicle.connection}`} /><div><strong>{vehicle.id}</strong><span>{vehicle.plate}</span></div></div></td>
+                      <td>{vehicle.monitoredSeat}</td>
+                      <td><OccupantLabel occupant={vehicle.occupant} /></td>
+                      <td><StatusBadge status={vehicle.state} /></td>
+                      <td><span className={`camera-state camera-state--${vehicle.camera.toLowerCase()}`}><Camera size={14} />{vehicle.camera}</span></td>
+                      <td className="muted">{fmtTime(vehicle.lastUpdate)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="privacy-inline"><ShieldCheck size={15} /><span>Admin telemetry contract: derived system states only. Raw HR, RR, temperature, pressure values, and camera frames are not displayed or persisted in this dashboard.</span></div>
           </div>
-          <div className="privacy-inline"><ShieldCheck size={15} /><span>Admin telemetry contract: derived system states only. Raw HR, RR, temperature, pressure values, and camera frames are not displayed or persisted in this dashboard.</span></div>
-        </section>
 
-        <section className="panel">
-          <SectionHeading eyebrow="FLEET STATE" title="Monitoring distribution" description="At-a-glance runtime state across registered SafeSeat units." />
-          <DonutChart normal={distribution.normal} warning={distribution.warning} critical={distribution.critical} />
-        </section>
-      </div>
+          <aside className="dashboard-state-card">
+            <div className="dashboard-state-card__head"><span className="eyebrow">FLEET STATE</span><h3>Monitoring distribution</h3><p>Current runtime state across registered SafeSeat units.</p></div>
+            <DonutChart normal={distribution.normal} warning={distribution.warning} critical={distribution.critical} />
+          </aside>
+        </div>
+      </section>
 
-      <div className="dashboard-grid">
-        <section className="panel">
+      <div className="dashboard-grid dashboard-grid--balanced">
+        <section className="panel dashboard-design-panel">
           <SectionHeading eyebrow="SYSTEM DESIGN" title="Verification is event-based" description="The camera participates only when the sensor-fusion flow requests posture context." />
           <div className="flow-strip">
             <div className="flow-node flow-node--active"><Radio /><strong>Primary sensors</strong><span>Continuous local monitoring</span></div>
@@ -104,7 +102,7 @@ export function Dashboard() {
           <div className="notice notice--green"><ShieldCheck size={18} /><div><strong>Privacy-preserving admin view</strong><p>The dashboard receives operational states and incident outcomes, not exact physiological readings. Camera posture remains supporting evidence and does not independently determine an emergency.</p></div></div>
         </section>
 
-        <section className="panel">
+        <section className="panel dashboard-activity-panel">
           <SectionHeading eyebrow="RECENT ACTIVITY" title="Latest safety events" action={<button className="text-button" onClick={() => navigate('/incidents')}>All incidents <ArrowRight size={16} /></button>} />
           <div className="activity-list">
             {recentEvents.map(event => {
@@ -116,6 +114,6 @@ export function Dashboard() {
       </div>
 
       <VehicleDetail vehicle={selected} onClose={() => setSelected(null)} />
-    </>
+    </div>
   );
 }

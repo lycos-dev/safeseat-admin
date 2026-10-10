@@ -57,7 +57,7 @@ export function Accounts() {
   };
 
   return (
-    <>
+    <div className="screen screen--accounts">
       <div className="metric-grid metric-grid--three">
         <div className="mini-stat"><div className="mini-stat__icon"><Users /></div><div><span>Registered accounts</span><strong>{state.accounts.length}</strong></div></div>
         <div className="mini-stat"><div className="mini-stat__icon mini-stat__icon--gold"><UsersRound /></div><div><span>Active guest sessions</span><strong>{activeGuests}</strong></div></div>
@@ -114,6 +114,6 @@ export function Accounts() {
           <div className="modal-actions"><button type="button" className="button button--ghost" onClick={() => setAddOpen(false)}>Cancel</button><button className="button button--primary" type="submit"><Plus size={17} />{runtimeConfig.dataMode === 'firebase' ? 'Link user' : 'Add account'}</button></div>
         </form>
       </Modal>
-    </>
+    </div>
   );
 }

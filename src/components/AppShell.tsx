@@ -48,26 +48,29 @@ export function AppShell() {
     <div className={`app-shell ${state.settings.compactDensity ? 'app-shell--compact' : ''}`}>
       <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}>
         <div className="sidebar__top">
-          <Brand />
+          <NavLink to="/" className="sidebar__brand-link" aria-label="SafeSeat overview"><Brand wordmark /></NavLink>
           <button className="sidebar__close" onClick={() => setMenuOpen(false)} aria-label="Close menu"><X /></button>
         </div>
         <div className="sidebar__section-label">CONTROL CENTER</div>
-        <nav className="sidebar__nav">
+        <nav className="sidebar__nav" aria-label="Primary navigation">
           {nav.map(item => {
             const Icon = item.icon;
             return (
               <NavLink key={item.to} to={item.to} end={item.to === '/'} className={({ isActive }) => `nav-item ${isActive ? 'nav-item--active' : ''}`}>
-                <Icon size={19} /><span>{item.label}</span>
+                <span className="nav-item__icon"><Icon size={18} /></span>
+                <span className="nav-item__label">{item.label}</span>
                 {item.to === '/incidents' && unresolved > 0 && <span className="nav-count">{unresolved}</span>}
               </NavLink>
             );
           })}
         </nav>
-        <div className="sidebar__privacy">
-          <ShieldCheck size={19} />
-          <div><strong>Privacy-minimized admin</strong><span>Derived states • event-based verification</span></div>
+        <div className="sidebar__footer">
+          <div className="sidebar__privacy">
+            <span className="sidebar__privacy-icon"><ShieldCheck size={17} /></span>
+            <div><strong>Secure admin view</strong><span>Derived states • event-based camera</span></div>
+          </div>
+          <button className="sidebar__signout" onClick={handleSignOut}><span className="sidebar__signout-icon"><LogOut size={17} /></span><span>Sign out</span></button>
         </div>
-        <button className="sidebar__signout" onClick={handleSignOut}><LogOut size={18} />Sign out</button>
       </aside>
       {menuOpen && <div className="sidebar-scrim" onClick={() => setMenuOpen(false)} />}
 
@@ -79,8 +82,8 @@ export function AppShell() {
           </div>
           <div className="topbar__right">
             <span className={`mode-pill ${runtimeConfig.dataMode === 'firebase' && syncStatus === 'error' ? 'mode-pill--error' : ''}`}><span className="pulse-dot" />{sourceLabel}</span>
-            <button className="icon-button topbar__bell" aria-label="Notifications"><Bell size={20} />{unresolved > 0 && <span className="notification-dot" />}</button>
-            <div className="admin-chip"><div className="admin-chip__avatar"><UserRoundCog size={17} /></div><div><strong>{identity?.name ?? 'SafeSeat Admin'}</strong><span>{identity?.role ?? 'Fleet Administrator'}</span></div></div>
+            <button className="icon-button topbar__bell" aria-label="Notifications"><Bell size={19} />{unresolved > 0 && <span className="notification-dot" />}</button>
+            <div className="admin-chip"><div className="admin-chip__avatar"><UserRoundCog size={16} /></div><div><strong>{identity?.name ?? 'SafeSeat Admin'}</strong><span>{identity?.role ?? 'Fleet Administrator'}</span></div></div>
           </div>
         </header>
         <div className="page"><Outlet /></div>

@@ -54,7 +54,7 @@ export function Health() {
   const percent = Math.round((totals.operational / Math.max(totals.total, 1)) * 100);
 
   return (
-    <>
+    <div className="screen screen--health">
       <div className="metric-grid metric-grid--three">
         <div className="mini-stat"><div className="mini-stat__icon"><CheckCircle2 /></div><div><span>Healthy / standby states</span><strong>{percent}%</strong></div></div>
         <div className="mini-stat"><div className="mini-stat__icon mini-stat__icon--gold"><Activity /></div><div><span>Degraded modules</span><strong>{totals.degraded}</strong></div></div>
@@ -100,6 +100,6 @@ export function Health() {
           <div className="notice notice--green"><ShieldCheck size={18} /><div><strong>Verification-safe behavior</strong><p>An UNKNOWN camera result must not clear a sensor-triggered verification. Only a temporally accepted upright result can support clearing, together with normalized primary-sensor evidence.</p></div></div>
         </section>
       </div>
-    </>
+    </div>
   );
 }

@@ -70,7 +70,7 @@ export function Fleet() {
   };
 
   return (
-    <>
+    <div className="screen screen--fleet">
       <section className="panel">
         <SectionHeading eyebrow="REGISTERED UNITS" title="Vehicle and monitored-seat registry" description="Each SafeSeat unit maps one vehicle, one Main Hub, one monitored seat, and the active occupant session. A session can belong to a registered occupant or a guest." action={<button className="button button--primary" onClick={() => setAddOpen(true)}><Plus size={17} />Register vehicle</button>} />
         <div className="toolbar">
@@ -125,6 +125,6 @@ export function Fleet() {
           <div className="modal-actions"><button type="button" className="button button--ghost" onClick={() => setAddOpen(false)}>Cancel</button><button type="submit" className="button button--primary"><Plus size={17} />Register vehicle</button></div>
         </form>
       </Modal>
-    </>
+    </div>
   );
 }
